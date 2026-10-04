@@ -1623,16 +1623,6 @@ function buildFieldsTable(properties, visibleFields) {{
   }});
 }}
 
-function buildPopupHtml(rows) {{
-  if (!rows) {{
-    return '<div class="feature-popup"><p>Tidak ada atribut untuk ditampilkan.</p></div>';
-  }}
-  const trs = rows
-    .map((r) => `<tr><th>${{escapeHtml(r.key)}}</th><td>${{escapeHtml(r.value)}}</td></tr>`)
-    .join('');
-  return `<div class="feature-popup"><table class="feature-popup-table">${{trs}}</table></div>`;
-}}
-
 // ---- Feature Information card (mode 'card' / 'both') ----
 const cardEl = document.getElementById('feature-info-card');
 const cardTitleEl = document.getElementById('feature-info-card-title');
@@ -1841,16 +1831,7 @@ function selectFeature(layerIndex, featureIndex, latlng) {{
   const feature = geojsonData ? geojsonData.features[featureIndex] : null;
   const rows = layerConfig && feature ? buildFieldsTable(feature.properties, layerConfig.visibleFields) : null;
 
-  if (CONFIG.featureDisplayMode !== 'card' && typeof layerInstance.openPopup === 'function') {{
-    if (latlng) {{
-      layerInstance.openPopup(latlng);
-    }} else {{
-      layerInstance.openPopup();
-    }}
-  }}
-  if (CONFIG.featureDisplayMode !== 'popup') {{
-    showFeatureCard(layerConfig ? layerConfig.name : '', rows);
-  }}
+  showFeatureCard(layerConfig ? layerConfig.name : '', rows);
 
   syncAttributeTableToActiveFeature();
 }}
@@ -2201,11 +2182,7 @@ function loadLayer(layer) {{
         onEachFeature: (feature, layerInstance) => {{
           const featureIndex = geojson.features.indexOf(feature);
           const properties = feature.properties || null;
-          const rows = buildFieldsTable(properties, layer.visibleFields);
 
-          if (!layer.isBoundary && properties && Object.keys(properties).length > 0 && CONFIG.featureDisplayMode !== 'card') {{
-            layerInstance.bindPopup(() => buildPopupHtml(rows), {{ autoPan: false }});
-          }}
 
           if (!layer.isBoundary && featureIndex !== -1) {{
             featureLayerRefs[layer.layerIndex + ':' + featureIndex] = layerInstance;
