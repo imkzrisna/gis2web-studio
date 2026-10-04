@@ -1923,26 +1923,3 @@ button {
   margin-top: 0;
   line-height: 1.2;
 }
-
-/* Point size: angka + satuan (seperti QGIS) */
-.point-size-control {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.point-size-input {
-  width: 4.2rem;
-  padding: 0.25rem 0.4rem;
-  font-size: 0.82rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.point-size-unit {
-  padding: 0.25rem 0.3rem;
-  font-size: 0.78rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-}

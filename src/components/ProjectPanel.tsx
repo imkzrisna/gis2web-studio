@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { POINT_SIZE_UNITS, radiusPxToSize, sizeToRadiusPx, type PointSizeUnit } from "../lib/pointSize";
 import LayerPreview from "./LayerPreview";
 
 export interface CategoryInfo {
@@ -86,8 +85,6 @@ function ProjectPanel({
   activeLayerIndex,
   onFocusLayer,
 }: ProjectPanelProps) {
-  const [pointSizeUnits, setPointSizeUnits] = useState<Record<number, PointSizeUnit>>({});
-  const [pointSizeDrafts, setPointSizeDrafts] = useState<Record<number, string>>({});
   const [collapsed, setCollapsed] = useState(false);
   const [panelTab, setPanelTab] = useState<PanelTab>("layers");
   const [layerFlowStep, setLayerFlowStep] = useState<"select" | "manage">("select");
@@ -413,51 +410,18 @@ function ProjectPanel({
                               <td onClick={(e) => e.stopPropagation()} className="opacity-cell">
                                 {isPointLayer ? (
                                   <>
-                                    <div className="point-size-control">
-                                      <input
-                                        type="number"
-                                        className="point-size-input"
-                                        min={0.1}
-                                        step={0.1}
-                                        value={
-                                          pointSizeDrafts[index] ??
-                                          String(radiusPxToSize(pointSize, pointSizeUnits[index] ?? "mm"))
-                                        }
-                                        onBlur={() =>
-                                          setPointSizeDrafts((prev) => {
-                                            const next = { ...prev };
-                                            delete next[index];
-                                            return next;
-                                          })
-                                        }
-                                        onChange={(e) => {
-                                          setPointSizeDrafts((prev) => ({ ...prev, [index]: e.target.value }));
-                                          const v = Number(e.target.value);
-                                          if (!Number.isFinite(v) || v <= 0) return;
-                                          onLayerPointSizeChange(
-                                            index,
-                                            sizeToRadiusPx(v, pointSizeUnits[index] ?? "mm")
-                                          );
-                                        }}
-                                        title="Ukuran point (diameter)"
-                                      />
-                                      <select
-                                        className="point-size-unit"
-                                        value={pointSizeUnits[index] ?? "mm"}
-                                        onChange={(e) =>
-                                          setPointSizeUnits((prev) => ({
-                                            ...prev,
-                                            [index]: e.target.value as PointSizeUnit,
-                                          }))
-                                        }
-                                      >
-                                        {POINT_SIZE_UNITS.map((u) => (
-                                          <option key={u.value} value={u.value}>
-                                            {u.label}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
+                                    <input
+                                      type="range"
+                                      min={2}
+                                      max={20}
+                                      step={1}
+                                      value={pointSize}
+                                      onChange={(e) =>
+                                        onLayerPointSizeChange(index, Number(e.target.value))
+                                      }
+                                      title="Atur ukuran point layer"
+                                    />
+                                    <span className="opacity-value">{pointSize}px</span>
                                   </>
                                 ) : (
                                   <span className="layer-note">-</span>
