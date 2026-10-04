@@ -219,6 +219,7 @@ function MapView({
       layerOrder: layerOrderRef.current,
       layerIndexes: layerRefsRef.current.keys(),
       isLayerVisible: (idx) => {
+        if (idx === boundaryLayerIndexRef.current) return false;
         const geoLayer = layerRefsRef.current.get(idx);
         return !!geoLayer && group.hasLayer(geoLayer);
       },
@@ -582,7 +583,7 @@ function MapView({
               const featureIndex = geojsonData.features.indexOf(feature);
               const properties = feature.properties as Record<string, unknown> | null;
 
-              if (properties && Object.keys(properties).length > 0) {
+              if (!isBoundary && properties && Object.keys(properties).length > 0) {
                 layerInstance.bindPopup(() => {
                   const selectedFields = visibleFieldsRef.current[index];
                   const allKeys = Object.keys(properties);
@@ -607,7 +608,7 @@ function MapView({
                 }, { autoPan: false });
               }
 
-              if (featureIndex !== -1) {
+              if (!isBoundary && featureIndex !== -1) {
                 featureLayerRefsRef.current.set(`${index}:${featureIndex}`, layerInstance);
                 layerInstance.on("click", (e: L.LeafletMouseEvent) => {
                   handleCycleClickRef.current?.(e);
