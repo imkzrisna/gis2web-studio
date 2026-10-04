@@ -155,6 +155,22 @@ function MapView({
     layerPointSizesRef.current = layerPointSizes;
   }, [layerPointSizes]);
 
+  // Point Size dinamis seperti opacity: langsung setRadius ke marker yang sudah
+  // terender (tanpa rebuild layer).
+  useEffect(() => {
+    layerRefsRef.current.forEach((geoLayer, index) => {
+      const radius = layerPointSizes[index] ?? BASE_POINT_RADIUS;
+      const apply = (l: L.Layer) => {
+        if (l instanceof L.CircleMarker) {
+          l.setRadius(radius);
+        } else if ((l as L.FeatureGroup).eachLayer) {
+          (l as L.FeatureGroup).eachLayer(apply);
+        }
+      };
+      geoLayer.eachLayer(apply);
+    });
+  }, [layerPointSizes]);
+
   useEffect(() => {
     visibleFieldsRef.current = visibleFields;
   }, [visibleFields]);
