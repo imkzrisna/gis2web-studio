@@ -428,17 +428,21 @@ function ProjectPanel({
                                 )}
                               </td>
                               <td onClick={(e) => e.stopPropagation()}>
-                                <label className="attribute-table-toggle">
-                                  <input
-                                    type="checkbox"
-                                    checked={layerAttributeTableEnabled[index] ?? false}
-                                    onChange={(e) =>
-                                      onAttributeTableToggle(index, e.target.checked)
-                                    }
-                                    title="Tampilkan Attribute Table untuk layer ini"
-                                  />
-                                  <span className="attribute-table-toggle-label">Tampilkan</span>
-                                </label>
+                                {isBoundary ? (
+                                  <span className="layer-note">-</span>
+                                ) : (
+                                  <label className="attribute-table-toggle">
+                                    <input
+                                      type="checkbox"
+                                      checked={layerAttributeTableEnabled[index] ?? false}
+                                      onChange={(e) =>
+                                        onAttributeTableToggle(index, e.target.checked)
+                                      }
+                                      title="Tampilkan Attribute Table untuk layer ini"
+                                    />
+                                    <span className="attribute-table-toggle-label">Tampilkan</span>
+                                  </label>
+                                )}
                               </td>
                             </tr>
                           );

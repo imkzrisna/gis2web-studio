@@ -230,6 +230,9 @@ function App() {
   function handleBoundaryLayerIndexChange(index: number | null) {
     setBoundaryLayerIndex(index);
     setActiveFeature((prev) => (prev && prev.layerIndex === index ? null : prev));
+    if (index !== null) {
+      setLayerAttributeTableEnabled((prev) => ({ ...prev, [index]: false }));
+    }
     setLayerOrder((prev) => enforceBoundaryAtBack(prev, index));
   }
 
@@ -255,7 +258,8 @@ function App() {
     .filter(
       (i) =>
         layerAttributeTableEnabled[i] &&
-        (selectedLayerIndexes.includes(i) || boundaryLayerIndex === i)
+        boundaryLayerIndex !== i &&
+        selectedLayerIndexes.includes(i)
     );
 
   return (
