@@ -229,6 +229,7 @@ function App() {
 
   function handleBoundaryLayerIndexChange(index: number | null) {
     setBoundaryLayerIndex(index);
+    setActiveFeature((prev) => (prev && prev.layerIndex === index ? null : prev));
     setLayerOrder((prev) => enforceBoundaryAtBack(prev, index));
   }
 
@@ -245,6 +246,7 @@ function App() {
   }
 
   function handleFocusFeature(layerIndex: number, featureIndex: number) {
+    if (layerIndex === boundaryLayerIndex) return;
     setActiveFeature({ layerIndex, featureIndex });
   }
 
