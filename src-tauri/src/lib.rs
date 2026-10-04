@@ -2097,11 +2097,11 @@ function loadLayer(layer) {{
           const properties = feature.properties || null;
           const rows = buildFieldsTable(properties, layer.visibleFields);
 
-          if (properties && Object.keys(properties).length > 0 && CONFIG.featureDisplayMode !== 'card') {{
+          if (!layer.isBoundary && properties && Object.keys(properties).length > 0 && CONFIG.featureDisplayMode !== 'card') {{
             layerInstance.bindPopup(() => buildPopupHtml(rows), {{ autoPan: false }});
           }}
 
-          if (featureIndex !== -1) {{
+          if (!layer.isBoundary && featureIndex !== -1) {{
             featureLayerRefs[layer.layerIndex + ':' + featureIndex] = layerInstance;
           }}
 

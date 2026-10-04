@@ -153,6 +153,7 @@ function ExportPreviewMap({
 
           // Popup: sama seperti hasil export (field sesuai visible_fields).
           if (
+            !isBoundary &&
             (exportConfig.featureDisplayMode === "popup" || exportConfig.featureDisplayMode === "both") &&
             properties &&
             Object.keys(properties).length > 0
@@ -182,7 +183,7 @@ function ExportPreviewMap({
           // menampilkan card ringan, sama seperti showFeatureCard() di
           // hasil export (app.js), bukan komponen FeatureInfoCard penuh
           // yang dipakai aplikasi utama (tidak ada edit kolom di preview).
-          if (featureIndex !== -1) {
+          if (!isBoundary && featureIndex !== -1) {
             featureLayersRef.current.set(`${index}:${featureIndex}`, layerInstance);
           }
 
@@ -244,7 +245,7 @@ function ExportPreviewMap({
         latlng,
         layerOrder: ctxRef.current.layerOrder,
         layerIndexes: geojsonRef.current.keys(),
-        isLayerVisible: () => true,
+        isLayerVisible: (i) => i !== boundaryLayerIndex,
         getGeojson: (i) => geojsonRef.current.get(i),
         getFeatureLayer: (k) => featureLayersRef.current.get(k),
       });
