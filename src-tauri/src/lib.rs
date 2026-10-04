@@ -1109,7 +1109,7 @@ fn build_style_css() -> String {
   top: 1rem;
   right: 1rem;
   z-index: 1100;
-  width: 300px;
+  width: 340px;
   max-width: calc(100vw - 2rem);
   max-height: calc(100% - 2rem);
   background: #ffffff;
@@ -1214,6 +1214,32 @@ fn build_style_css() -> String {
 .feature-info-card-table td {
   color: #18181b;
   word-break: break-word;
+}
+
+/* HP / layar sempit: card menjadi bottom sheet. Peta di atasnya tetap bisa disentuh. */
+@media (max-width: 640px) {
+  .feature-info-card {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    max-height: 40vh;
+    border-radius: 18px 18px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .feature-info-card-close {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+  }
+  .feature-info-card-table {
+    font-size: 0.85rem;
+  }
 }
 
 .leaflet-popup-content-wrapper {
