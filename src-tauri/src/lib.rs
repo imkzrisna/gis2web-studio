@@ -1849,6 +1849,86 @@ function handleMapClick(e) {{
 
 map.on('click', handleMapClick);
 
+// ---- Smart Hover: feature teratas di bawah kursor (hit-test sama dengan
+// klik) diberi highlight ringan. Dinonaktifkan di perangkat sentuh. ----
+let hoveredFeatureKey = null;
+
+// Port dari getPreviewHighlightStyle (layerStyle.ts): hover berbeda dari
+// highlight seleksi (kuning) supaya terbedakan dari feature yang dipilih.
+function getPreviewHighlightStyle(base) {{
+  return Object.assign({{}}, base, {{
+    weight: (base.weight != null ? base.weight : 1.5) + 2,
+    color: '#3b82f6',
+    dashArray: '4 3',
+    fillOpacity: Math.min((base.fillOpacity != null ? base.fillOpacity : 0.35) + 0.1, 0.65),
+  }});
+}}
+
+function clearHover() {{
+  const key = hoveredFeatureKey;
+  if (!key) return;
+  hoveredFeatureKey = null;
+  if (key === activeFeatureKey) return;
+  const inst = featureLayerRefs[key];
+  if (!inst) return;
+  const parts = key.split(':');
+  const li = Number(parts[0]);
+  const fi = Number(parts[1]);
+  const geojsonData = layerGeojsonData[li];
+  const feat = geojsonData ? geojsonData.features[fi] : null;
+  const gt = feat && feat.geometry ? feat.geometry.type : undefined;
+  if ((gt === 'Point' || gt === 'MultiPoint') && typeof inst.setRadius === 'function') {{
+    const lc = CONFIG.layers.find((l) => l.layerIndex === li);
+    inst.setRadius((lc && lc.pointSize) || 5);
+  }}
+  const styleFn = layerStyleFns[li];
+  if (!styleFn || typeof inst.setStyle !== 'function') return;
+  const base = styleFn(inst.feature);
+  const sameLayerAsActive = activeFeatureKey && activeFeatureKey.split(':')[0] === String(li);
+  inst.setStyle(sameLayerAsActive ? getSubtleHighlightStyle(base) : base);
+}}
+
+function applyHover(key) {{
+  if (key === hoveredFeatureKey) return;
+  clearHover();
+  if (!key || key === activeFeatureKey) return;
+  const inst = featureLayerRefs[key];
+  if (!inst) return;
+  const parts = key.split(':');
+  const li = Number(parts[0]);
+  const fi = Number(parts[1]);
+  const geojsonData = layerGeojsonData[li];
+  const feat = geojsonData ? geojsonData.features[fi] : null;
+  const gt = feat && feat.geometry ? feat.geometry.type : undefined;
+  if ((gt === 'Point' || gt === 'MultiPoint') && typeof inst.setRadius === 'function') {{
+    const lc = CONFIG.layers.find((l) => l.layerIndex === li);
+    inst.setRadius(((lc && lc.pointSize) || 5) + 4);
+  }}
+  const styleFn = layerStyleFns[li];
+  if (styleFn && typeof inst.setStyle === 'function') {{
+    inst.setStyle(getPreviewHighlightStyle(styleFn(inst.feature)));
+  }}
+  hoveredFeatureKey = key;
+}}
+
+if (!(window.matchMedia && window.matchMedia('(hover: none)').matches && window.matchMedia('(pointer: coarse)').matches)) {{
+  let hoverRaf = null;
+  map.on('mousemove', (e) => {{
+    if (hoverRaf !== null) return;
+    hoverRaf = window.requestAnimationFrame(() => {{
+      hoverRaf = null;
+      try {{
+        const top = getVisibleZOrderedFeatureCandidates(e.latlng)[0];
+        applyHover(top ? top.layerIndex + ':' + top.featureIndex : null);
+      }} catch (err) {{ /* abaikan error hit-test saat hover */ }}
+    }});
+  }});
+  map.on('mouseout', () => {{
+    if (hoverRaf !== null) {{ window.cancelAnimationFrame(hoverRaf); hoverRaf = null; }}
+    clearHover();
+  }});
+}}
+
 // Point/MultiPoint selalu tampak di atas Polygon/Buffer (murni z-order).
 function bringPointFeaturesToFront() {{
   Object.keys(featureLayerRefs).forEach((key) => {{
