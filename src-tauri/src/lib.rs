@@ -2234,7 +2234,7 @@ fn export_web_gis(
             "labeling": labeling_json,
             "visibleFields": layer.visible_fields,
             "isBoundary": layer.is_boundary,
-            "showAttributeTable": layer.show_attribute_table,
+            "showAttributeTable": layer.show_attribute_table && !layer.is_boundary,
         }));
     }
 

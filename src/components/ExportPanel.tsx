@@ -195,7 +195,7 @@ function ExportPanel({
           labeling,
           visible_fields: layerVisibleFields[index] ?? null,
           is_boundary: isBoundary,
-          show_attribute_table: layerAttributeTableEnabled[index] ?? false,
+          show_attribute_table: isBoundary ? false : (layerAttributeTableEnabled[index] ?? false),
         };
       });
   }
