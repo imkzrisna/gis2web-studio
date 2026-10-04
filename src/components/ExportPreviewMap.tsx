@@ -62,7 +62,7 @@ function ExportPreviewMap({
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    const map = L.map(containerRef.current, { zoomControl: true }).setView([-2.5, 118], 5);
+    const map = L.map(containerRef.current, { zoomControl: true, doubleClickZoom: false }).setView([-2.5, 118], 5);
     mapRef.current = map;
     return () => {
       map.remove();
