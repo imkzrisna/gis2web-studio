@@ -56,8 +56,8 @@ function ExportPreviewMap({
     matches: [],
     index: 0,
   });
-  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerPointSizes, mode: exportConfig.featureDisplayMode });
-  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerPointSizes, mode: exportConfig.featureDisplayMode };
+  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerPointSizes });
+  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerPointSizes };
   const [card, setCard] = useState<{ layerName: string; rows: { key: string; value: string }[] } | null>(null);
 
   useEffect(() => {
@@ -151,34 +151,6 @@ function ExportPreviewMap({
           const properties = feature.properties as Record<string, unknown> | null;
           const featureIndex = (data as GeoJSON.FeatureCollection).features.indexOf(feature);
 
-          // Popup: sama seperti hasil export (field sesuai visible_fields).
-          if (
-            !isBoundary &&
-            (exportConfig.featureDisplayMode === "popup" || exportConfig.featureDisplayMode === "both") &&
-            properties &&
-            Object.keys(properties).length > 0
-          ) {
-            layerInstance.bindPopup(() => {
-              const selectedFields = layerVisibleFields[index];
-              const allKeys = Object.keys(properties);
-              const fieldsToShow = selectedFields
-                ? selectedFields.filter((f) => allKeys.includes(f))
-                : allKeys;
-              if (fieldsToShow.length === 0) {
-                return '<div class="feature-popup"><p class="feature-popup-empty">Tidak ada kolom yang dipilih untuk ditampilkan.</p></div>';
-              }
-              const rows = fieldsToShow
-                .map((key) => {
-                  const value = properties[key];
-                  return `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(
-                    value === null || value === undefined ? "-" : String(value)
-                  )}</td></tr>`;
-                })
-                .join("");
-              return `<div class="feature-popup"><table class="feature-popup-table">${rows}</table></div>`;
-            }, { autoPan: false });
-          }
-
           // Feature Information card (mode "card" / "both"): klik feature
           // menampilkan card ringan, sama seperti showFeatureCard() di
           // hasil export (app.js), bukan komponen FeatureInfoCard penuh
@@ -229,7 +201,6 @@ function ExportPreviewMap({
     layerPointSizes,
     layerOrder,
     config.basemap,
-    exportConfig.featureDisplayMode,
     exportConfig.labelFontSize,
     layerVisibleFields,
   ]);
@@ -350,23 +321,15 @@ function ExportPreviewMap({
         | Record<string, unknown>
         | null;
 
-      if (ctx.mode === "card" || ctx.mode === "both") {
-        const selectedFields = ctx.layerVisibleFields[sel.layerIndex];
-        const allKeys = props ? Object.keys(props) : [];
-        const fieldsToShow = selectedFields ? selectedFields.filter((f) => allKeys.includes(f)) : allKeys;
-        const rows = fieldsToShow.map((key) => {
-          const value = props ? props[key] : undefined;
-          return { key, value: value === null || value === undefined ? "-" : String(value) };
-        });
-        setCard({ layerName: layer?.name ?? "", rows });
-      } else {
-        setCard(null);
-      }
-
+      const selectedFields = ctx.layerVisibleFields[sel.layerIndex];
+      const allKeys = props ? Object.keys(props) : [];
+      const fieldsToShow = selectedFields ? selectedFields.filter((f) => allKeys.includes(f)) : allKeys;
+      const rows = fieldsToShow.map((key) => {
+        const value = props ? props[key] : undefined;
+        return { key, value: value === null || value === undefined ? "-" : String(value) };
+      });
+      setCard({ layerName: layer?.name ?? "", rows });
       map.closePopup();
-      if (ctx.mode === "popup" || ctx.mode === "both") {
-        (sel.layerInstance as L.Layer & { openPopup?: (ll?: L.LatLng) => L.Layer }).openPopup?.(e.latlng);
-      }
     };
 
     map.on("mousemove", onMouseMove);

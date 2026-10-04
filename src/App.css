@@ -733,7 +733,8 @@ button {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 260px;
+  width: 340px;
+  max-width: calc(100% - 2rem);
   max-height: calc(100% - 2rem);
   overflow-y: auto;
   background: var(--color-surface);
@@ -1922,4 +1923,16 @@ button {
   font-size: 0.88rem;
   margin-top: 0;
   line-height: 1.2;
+}
+
+/* Frame Mobile di preview: card menjadi bottom sheet (meniru @media export) */
+.export-preview-frame--mobile .export-preview-feature-card {
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  max-height: 40%;
+  border-radius: 18px 18px 0 0;
 }
