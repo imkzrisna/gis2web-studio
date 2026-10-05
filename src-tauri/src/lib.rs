@@ -1037,7 +1037,6 @@ struct ExportConfig {
     max_zoom: u32,
     tile_url: String,
     attribution: String,
-    feature_display_mode: String,
     label_font_size: f64,
 }
 
@@ -2330,7 +2329,6 @@ fn export_web_gis(
         },
         "minZoom": config.min_zoom,
         "maxZoom": config.max_zoom,
-        "featureDisplayMode": config.feature_display_mode,
     });
 
     std::fs::write(output_root.join("index.html"), build_index_html())

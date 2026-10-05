@@ -39,7 +39,6 @@ export interface ExportConfig {
   minZoom: number;
   maxZoom: number;
   labelFontSize: number;
-  featureDisplayMode: FeatureDisplayMode;
 }
 
 interface ConfigurationPanelProps {
@@ -53,24 +52,6 @@ export const BASEMAP_OPTIONS: { value: BasemapOption; label: string }[] = [
   { value: "osm", label: "OpenStreetMap" },
   { value: "satellite", label: "Satellite (Esri World Imagery)" },
   { value: "topo", label: "Topographic (OpenTopoMap)" },
-];
-
-export const FEATURE_DISPLAY_OPTIONS: { value: FeatureDisplayMode; label: string; hint: string }[] = [
-  {
-    value: "card",
-    label: "Hanya Card",
-    hint: "Feature Information card mengambang saja, tanpa popup di peta.",
-  },
-  {
-    value: "popup",
-    label: "Hanya Popup",
-    hint: "Popup di peta saja, tanpa Feature Information card.",
-  },
-  {
-    value: "both",
-    label: "Keduanya",
-    hint: "Tampilkan Feature Information card dan popup di peta.",
-  },
 ];
 
 export const ZOOM_MIN_LIMIT = 5;

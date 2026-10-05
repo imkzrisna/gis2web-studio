@@ -100,7 +100,6 @@ function App() {
     minZoom: 5,
     maxZoom: 18,
     labelFontSize: 13,
-    featureDisplayMode: "card",
   });
   const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
 
@@ -144,9 +143,6 @@ function App() {
                 minZoom,
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
-                featureDisplayMode: ["card", "popup", "both"].includes(e.featureDisplayMode as string)
-                  ? (e.featureDisplayMode as ExportConfig["featureDisplayMode"])
-                  : "card",
               });
             }
           } catch (err) {

@@ -6,7 +6,6 @@ import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, ExportConfig } from "./ConfigurationPanel";
 import {
   BASEMAP_TILE_INFO,
-  FEATURE_DISPLAY_OPTIONS,
   ZOOM_MIN_LIMIT,
   ZOOM_MAX_LIMIT,
   LABEL_FONT_SIZE_MIN,
@@ -221,7 +220,6 @@ function ExportPanel({
           max_zoom: exportConfig.maxZoom,
           tile_url: basemapResolved.tile_url,
           attribution: basemapResolved.attribution,
-          feature_display_mode: exportConfig.featureDisplayMode,
           label_font_size: exportConfig.labelFontSize,
         },
       });
@@ -290,27 +288,6 @@ function ExportPanel({
             <span className="config-slider-bound">{LABEL_FONT_SIZE_MAX}</span>
           </div>
           <div className="config-slider-value">{exportConfig.labelFontSize}px</div>
-        </div>
-
-        <div className="config-slider-block">
-          <label className="config-slider-label">Tampilan Informasi Feature</label>
-          <div className="config-radio-group">
-            {FEATURE_DISPLAY_OPTIONS.map((option) => (
-              <label key={option.value} className="config-radio-item config-radio-item--stacked">
-                <div className="config-radio-item-row">
-                  <input
-                    type="radio"
-                    name="export-feature-display-mode"
-                    value={option.value}
-                    checked={exportConfig.featureDisplayMode === option.value}
-                    onChange={() => onExportConfigChange({ ...exportConfig, featureDisplayMode: option.value })}
-                  />
-                  {option.label}
-                </div>
-                <span className="config-radio-item-hint">{option.hint}</span>
-              </label>
-            ))}
-          </div>
         </div>
       </section>
 
