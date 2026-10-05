@@ -292,6 +292,48 @@ function ExportPanel({
       </section>
 
       <section className="config-section">
+        <h3>Identitas Halaman</h3>
+        <div className="config-slider-block">
+          <label className="config-slider-label">Title Halaman</label>
+          <input
+            type="text"
+            maxLength={120}
+            placeholder="GIS2Web Studio Export"
+            value={exportConfig.exportTitle}
+            onChange={(e) => onExportConfigChange({ ...exportConfig, exportTitle: e.target.value })}
+          />
+        </div>
+        <div className="config-slider-block">
+          <label className="config-slider-label">Logo (Favicon)</label>
+          <button
+            type="button"
+            onClick={async () => {
+              const selected = await open({
+                multiple: false,
+                filters: [{ name: "Gambar", extensions: ["png", "jpg", "jpeg", "svg", "ico"] }],
+              });
+              if (typeof selected === "string") {
+                onExportConfigChange({ ...exportConfig, exportLogoPath: selected });
+              }
+            }}
+          >
+            Pilih Logo
+          </button>
+          {exportConfig.exportLogoPath && (
+            <>
+              <p className="project-path">{exportConfig.exportLogoPath.split(/[\\/]/).pop()}</p>
+              <button
+                type="button"
+                onClick={() => onExportConfigChange({ ...exportConfig, exportLogoPath: null })}
+              >
+                Hapus Logo
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="config-section">
         <h3>Folder Output</h3>
         <button type="button" onClick={handleChooseFolder}>
           Pilih Folder Output

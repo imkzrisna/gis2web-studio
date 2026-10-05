@@ -100,6 +100,8 @@ function App() {
     minZoom: 5,
     maxZoom: 18,
     labelFontSize: 13,
+    exportTitle: "",
+    exportLogoPath: null,
   });
   const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
 
@@ -143,6 +145,9 @@ function App() {
                 minZoom,
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
+                exportTitle: typeof e.exportTitle === "string" ? e.exportTitle.slice(0, 120) : "",
+                exportLogoPath:
+                  typeof e.exportLogoPath === "string" && e.exportLogoPath ? e.exportLogoPath : null,
               });
             }
           } catch (err) {

@@ -39,6 +39,8 @@ export interface ExportConfig {
   minZoom: number;
   maxZoom: number;
   labelFontSize: number;
+  exportTitle: string;
+  exportLogoPath: string | null;
 }
 
 interface ConfigurationPanelProps {
