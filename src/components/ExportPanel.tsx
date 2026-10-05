@@ -221,6 +221,8 @@ function ExportPanel({
           tile_url: basemapResolved.tile_url,
           attribution: basemapResolved.attribution,
           label_font_size: exportConfig.labelFontSize,
+          export_title: exportConfig.exportTitle,
+          export_logo_path: exportConfig.exportLogoPath,
         },
       });
       setResultMessage(message);

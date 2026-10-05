@@ -1038,6 +1038,15 @@ struct ExportConfig {
     tile_url: String,
     attribution: String,
     label_font_size: f64,
+    export_title: Option<String>,
+    export_logo_path: Option<String>,
+}
+
+fn escape_export_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }
 
 fn build_index_html() -> String {
@@ -2331,7 +2340,43 @@ fn export_web_gis(
         "maxZoom": config.max_zoom,
     });
 
-    std::fs::write(output_root.join("index.html"), build_index_html())
+    let page_title = config
+        .export_title
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .unwrap_or("GIS2Web Studio Export");
+    let mut index_html = build_index_html().replacen(
+        "<title>GIS2Web Studio Export</title>",
+        &format!("<title>{}</title>", escape_export_html(page_title)),
+        1,
+    );
+
+    if let Some(logo_path) = config.export_logo_path.as_deref().filter(|p| !p.is_empty()) {
+        let ext = Path::new(logo_path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .unwrap_or_default();
+        if !["png", "jpg", "jpeg", "svg", "ico"].contains(&ext.as_str()) {
+            return Err("Format logo tidak didukung (gunakan PNG, JPG, SVG, atau ICO).".to_string());
+        }
+        let assets_dir = output_root.join("assets");
+        std::fs::create_dir_all(&assets_dir)
+            .map_err(|e| format!("Gagal membuat folder assets: {e}"))?;
+        let icon_name = format!("favicon.{ext}");
+        std::fs::copy(logo_path, assets_dir.join(&icon_name))
+            .map_err(|e| format!("Gagal menyalin logo: {e}"))?;
+        index_html = index_html.replacen(
+            "<link rel=\"stylesheet\" href=\"css/style.css\" />",
+            &format!(
+                "<link rel=\"icon\" href=\"assets/{icon_name}\" />\n<link rel=\"stylesheet\" href=\"css/style.css\" />"
+            ),
+            1,
+        );
+    }
+
+    std::fs::write(output_root.join("index.html"), index_html)
         .map_err(|e| format!("Gagal menulis index.html: {e}"))?;
     std::fs::write(css_dir.join("style.css"), build_style_css())
         .map_err(|e| format!("Gagal menulis style.css: {e}"))?;
