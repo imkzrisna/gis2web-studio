@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import ExportPreviewMap from "./ExportPreviewMap";
 import { invoke } from "@tauri-apps/api/core";
 import type { LayerInfo } from "./ProjectPanel";
@@ -295,6 +296,21 @@ function ExportPanel({
 
       <section className="config-section">
         <h3>Identitas Halaman</h3>
+        <div className="export-tab-mockup" aria-label="Pratinjau tab browser">
+          <span className="export-tab-mockup-icon">
+            {exportConfig.exportLogoPath ? (
+              <img src={convertFileSrc(exportConfig.exportLogoPath)} alt="" />
+            ) : (
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" />
+              </svg>
+            )}
+          </span>
+          <span className="export-tab-mockup-title">
+            {exportConfig.exportTitle.trim() || "GIS2Web Studio Export"}
+          </span>
+        </div>
         <div className="config-slider-block">
           <label className="config-slider-label">Title Halaman</label>
           <input
