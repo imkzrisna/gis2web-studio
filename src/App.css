@@ -2060,3 +2060,45 @@ button {
 .lc-primary { background: #2563eb; color: #fff; }
 .lc-primary:hover { background: #1d4ed8; }
 .lc-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Atur Label */
+.map-view-wrapper { position: relative; }
+
+.label-edit-btn {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  cursor: pointer;
+}
+
+.label-edit-btn.on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.map-container.label-edit-mode .leaflet-tooltip.layer-feature-label {
+  pointer-events: auto;
+  cursor: move;
+  outline: 1px dashed rgba(37, 99, 235, 0.7);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.export-preview-map-wrap.label-edit-mode .leaflet-tooltip.layer-feature-label {
+  pointer-events: auto;
+  cursor: move;
+  outline: 1px dashed rgba(37, 99, 235, 0.7);
+  outline-offset: 2px;
+  border-radius: 3px;
+}

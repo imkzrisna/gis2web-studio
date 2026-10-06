@@ -1,3 +1,4 @@
+import type { LabelPositions } from "../lib/labelPositions";
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -27,6 +28,8 @@ interface ExportPanelProps {
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
   layerAttributeTableEnabled: Record<number, boolean>;
+  labelPositions: LabelPositions;
+  onLabelPositionsChange: (positions: LabelPositions) => void;
   config: WebGisConfig;
   exportConfig: ExportConfig;
   onExportConfigChange: (config: ExportConfig) => void;
@@ -122,6 +125,8 @@ function ExportPanel({
   layerOrder,
   layerVisibleFields,
   layerAttributeTableEnabled,
+  labelPositions,
+  onLabelPositionsChange,
   config,
   exportConfig,
   onExportConfigChange,
@@ -437,6 +442,8 @@ function ExportPanel({
           layerPointSizes={layerPointSizes}
           layerOrder={layerOrder}
           layerVisibleFields={layerVisibleFields}
+          labelPositions={labelPositions}
+          onLabelPositionsChange={onLabelPositionsChange}
           config={config}
           exportConfig={exportConfig}
           device={previewDevice}

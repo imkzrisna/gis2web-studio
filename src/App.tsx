@@ -1,3 +1,4 @@
+import { sanitizeLabelPositions, type LabelPositions } from "./lib/labelPositions";
 import { sanitizeLogoCrop } from "./lib/logoCrop";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -106,6 +107,7 @@ function App() {
     exportLogoCrop: null,
   });
   const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
+  const [labelPositions, setLabelPositions] = useState<LabelPositions>({});
 
   // Pengaturan (config + exportConfig) disimpan di samping file .qgz
   // sebagai <nama>.qgz.gis2web.json dan dimuat otomatis saat project dipilih.
@@ -113,6 +115,7 @@ function App() {
 
   useEffect(() => {
     loadedPathRef.current = null;
+    setLabelPositions({});
     if (!projectPath) return;
     let cancelled = false;
 
@@ -124,7 +127,9 @@ function App() {
             const data = JSON.parse(raw) as {
               config?: Partial<WebGisConfig>;
               exportConfig?: Partial<ExportConfig>;
+              labelPositions?: unknown;
             };
+            setLabelPositions(sanitizeLabelPositions(data.labelPositions));
             const c = data.config;
             if (c && ["osm", "satellite", "topo", "custom"].includes(c.basemap as string)) {
               const isCustom = c.basemap === "custom";
@@ -177,11 +182,11 @@ function App() {
     const timeout = window.setTimeout(() => {
       invoke("save_project_settings", {
         projectPath,
-        json: JSON.stringify({ version: 1, config, exportConfig }),
+        json: JSON.stringify({ version: 1, config, exportConfig, labelPositions }),
       }).catch((err) => console.error("Gagal menyimpan pengaturan project:", err));
     }, 500);
     return () => window.clearTimeout(timeout);
-  }, [projectPath, config, exportConfig]);
+  }, [projectPath, config, exportConfig, labelPositions]);
   const [gdalAvailable, setGdalAvailable] = useState(false);
 
   // Layer basemap/tile (mis. "OpenStreetMap" XYZ) yang ikut terbaca dari
@@ -401,6 +406,8 @@ function App() {
               layerOrder={layerOrder}
               layerVisibleFields={layerVisibleFields}
               layerAttributeTableEnabled={layerAttributeTableEnabled}
+              labelPositions={labelPositions}
+              onLabelPositionsChange={setLabelPositions}
               config={config}
               exportConfig={exportConfig}
               onExportConfigChange={setExportConfig}

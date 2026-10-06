@@ -1,3 +1,5 @@
+import { attachLabelDrag, type LabelDragCtx } from "../lib/labelDrag";
+import type { LabelPositions } from "../lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import type { LayerInfo } from "./ProjectPanel";
@@ -11,6 +13,8 @@ interface ExportPreviewMapProps {
   layers: LayerInfo[];
   selectedLayerIndexes: number[];
   boundaryLayerIndex: number | null;
+  labelPositions: LabelPositions;
+  onLabelPositionsChange: (positions: LabelPositions) => void;
   layerColors: Record<number, string>;
   layerCategoryColors: Record<number, Record<string, string>>;
   layerOpacities: Record<number, number>;
@@ -30,6 +34,8 @@ function ExportPreviewMap({
   layers,
   selectedLayerIndexes,
   boundaryLayerIndex,
+  labelPositions,
+  onLabelPositionsChange,
   layerColors,
   layerCategoryColors,
   layerOpacities,
@@ -58,6 +64,19 @@ function ExportPreviewMap({
   });
   const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerPointSizes });
   ctxRef.current = { layers, layerOrder, layerVisibleFields, layerPointSizes };
+  const [labelEdit, setLabelEdit] = useState(false);
+  const labelEditRef = useRef(false);
+  const labelPositionsRef = useRef<LabelPositions>(labelPositions);
+  const onLabelPositionsChangeRef = useRef(onLabelPositionsChange);
+  labelEditRef.current = labelEdit;
+  labelPositionsRef.current = labelPositions;
+  onLabelPositionsChangeRef.current = onLabelPositionsChange;
+  const labelDragCtx: LabelDragCtx = {
+    getMap: () => mapRef.current,
+    isEditing: () => labelEditRef.current,
+    getPositions: () => labelPositionsRef.current,
+    setPositions: (p) => onLabelPositionsChangeRef.current(p),
+  };
   const [card, setCard] = useState<{ layerName: string; rows: { key: string; value: string }[] } | null>(null);
 
   useEffect(() => {
@@ -171,9 +190,14 @@ function ExportPreviewMap({
                 className: "layer-feature-label",
               });
               layerInstance.once("tooltipopen", (e: L.LeafletEvent) => {
-                const tooltipEl = (e as unknown as { tooltip: L.Tooltip }).tooltip.getElement();
+                const tooltip = (e as unknown as { tooltip: L.Tooltip }).tooltip;
+                const tooltipEl = tooltip.getElement();
+                const labelKey = `${index}:${featureIndex}`;
+                const saved = labelPositionsRef.current[labelKey];
+                if (saved) tooltip.setLatLng(L.latLng(saved[0], saved[1]));
                 if (tooltipEl) {
                   tooltipEl.style.fontSize = `${exportConfig.labelFontSize}px`;
+                  attachLabelDrag(tooltipEl, tooltip, layerInstance, labelKey, labelDragCtx);
                 }
               });
             }
@@ -279,6 +303,7 @@ function ExportPreviewMap({
 
     let rafId: number | null = null;
     const onMouseMove = (e: L.LeafletMouseEvent) => {
+      if (labelEditRef.current) return;
       if (rafId !== null) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = null;
@@ -295,6 +320,7 @@ function ExportPreviewMap({
     };
 
     const onClick = (e: L.LeafletMouseEvent) => {
+      if (labelEditRef.current) return;
       const candidates = getCandidates(e.latlng);
       if (candidates.length === 0) return;
 
@@ -428,8 +454,18 @@ function ExportPreviewMap({
   }, [device]);
 
   return (
-    <div className="export-preview-map-wrap">
+    <div className={"export-preview-map-wrap" + (labelEdit ? " label-edit-mode" : "")}>
       <div ref={containerRef} className="export-preview-map" />
+      {layers.some((l) => l.labeling) && (
+        <button
+          type="button"
+          className={"label-edit-btn" + (labelEdit ? " on" : "")}
+          onClick={() => setLabelEdit((v) => !v)}
+          title="Tarik label untuk mengatur posisinya. Klik dua kali pada label untuk mengembalikan."
+        >
+          {labelEdit ? "Selesai Atur Label" : "Atur Label"}
+        </button>
+      )}
       {card && (
         <div className="export-preview-feature-card">
           <div className="export-preview-feature-card-header">
