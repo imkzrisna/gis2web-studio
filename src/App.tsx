@@ -1,3 +1,4 @@
+import { sanitizeLogoCrop } from "./lib/logoCrop";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
@@ -102,7 +103,7 @@ function App() {
     labelFontSize: 13,
     exportTitle: "",
     exportLogoPath: null,
-    exportLogoData: null,
+    exportLogoCrop: null,
   });
   const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
 
@@ -147,9 +148,9 @@ function App() {
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
                 exportTitle: typeof e.exportTitle === "string" ? e.exportTitle.slice(0, 120) : "",
-                exportLogoData:
-                  typeof e.exportLogoData === "string" && e.exportLogoData.startsWith("data:image/png")
-                    ? e.exportLogoData
+                exportLogoCrop:
+                  typeof e.exportLogoPath === "string" && e.exportLogoPath
+                    ? sanitizeLogoCrop(e.exportLogoCrop)
                     : null,
                 exportLogoPath:
                   typeof e.exportLogoPath === "string" && e.exportLogoPath ? e.exportLogoPath : null,

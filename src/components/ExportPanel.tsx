@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import LogoCropper from "./LogoCropper";
+import LogoPreview from "./LogoPreview";
 import ExportPreviewMap from "./ExportPreviewMap";
 import { invoke } from "@tauri-apps/api/core";
 import type { LayerInfo } from "./ProjectPanel";
@@ -129,7 +131,7 @@ function ExportPanel({
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropPath, setCropPath] = useState<string | null>(null);
 
   const zoomError = exportConfig.maxZoom < exportConfig.minZoom;
 
@@ -299,8 +301,12 @@ function ExportPanel({
         <h3>Identitas Halaman</h3>
         <div className="export-tab-mockup" aria-label="Pratinjau tab browser">
           <span className="export-tab-mockup-icon">
-            {exportConfig.exportLogoData ? (
-              <img src={exportConfig.exportLogoData} alt="" />
+            {exportConfig.exportLogoPath && exportConfig.exportLogoCrop ? (
+              <LogoPreview
+                src={convertFileSrc(exportConfig.exportLogoPath)}
+                crop={exportConfig.exportLogoCrop}
+                size={20}
+              />
             ) : (
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="9" />
@@ -324,40 +330,46 @@ function ExportPanel({
         </div>
         <div className="config-slider-block">
           <label className="config-slider-label">Logo (Favicon)</label>
-          <label className="logo-pick-btn">
-            Pilih Logo
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/svg+xml,image/x-icon,image/webp"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = "";
-                if (f) setCropSrc(URL.createObjectURL(f));
-              }}
-            />
-          </label>
-          {exportConfig.exportLogoData && (
+          <div className="logo-actions">
             <button
               type="button"
-              onClick={() =>
-                onExportConfigChange({ ...exportConfig, exportLogoData: null, exportLogoPath: null })
-              }
-            >
-              Hapus Logo
-            </button>
-          )}
-          {cropSrc && (
-            <LogoCropper
-              src={cropSrc}
-              onCancel={() => {
-                URL.revokeObjectURL(cropSrc);
-                setCropSrc(null);
+              onClick={async () => {
+                const selected = await open({
+                  multiple: false,
+                  filters: [{ name: "Gambar", extensions: ["png", "jpg", "jpeg", "svg", "ico"] }],
+                });
+                if (typeof selected === "string") setCropPath(selected);
               }}
-              onConfirm={(dataUrl) => {
-                onExportConfigChange({ ...exportConfig, exportLogoData: dataUrl, exportLogoPath: null });
-                URL.revokeObjectURL(cropSrc);
-                setCropSrc(null);
+            >
+              Pilih Logo
+            </button>
+            {exportConfig.exportLogoPath && (
+              <>
+                <button type="button" onClick={() => setCropPath(exportConfig.exportLogoPath)}>
+                  Atur Crop
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onExportConfigChange({ ...exportConfig, exportLogoPath: null, exportLogoCrop: null })
+                  }
+                >
+                  Hapus Logo
+                </button>
+              </>
+            )}
+          </div>
+          {exportConfig.exportLogoPath && (
+            <p className="project-path">{exportConfig.exportLogoPath.split(/[\\/]/).pop()}</p>
+          )}
+          {cropPath && (
+            <LogoCropper
+              src={convertFileSrc(cropPath)}
+              initialCrop={cropPath === exportConfig.exportLogoPath ? exportConfig.exportLogoCrop : null}
+              onCancel={() => setCropPath(null)}
+              onConfirm={(crop) => {
+                onExportConfigChange({ ...exportConfig, exportLogoPath: cropPath, exportLogoCrop: crop });
+                setCropPath(null);
               }}
             />
           )}

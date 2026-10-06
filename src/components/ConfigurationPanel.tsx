@@ -1,3 +1,4 @@
+import type { LogoCrop } from "../lib/logoCrop";
 export type BasemapOption = "osm" | "satellite" | "topo" | "custom";
 
 export interface BasemapCandidateInfo {
@@ -41,7 +42,7 @@ export interface ExportConfig {
   labelFontSize: number;
   exportTitle: string;
   exportLogoPath: string | null;
-  exportLogoData: string | null;
+  exportLogoCrop: LogoCrop | null;
 }
 
 interface ConfigurationPanelProps {
