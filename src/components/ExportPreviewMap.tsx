@@ -82,7 +82,8 @@ function ExportPreviewMap({
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    const map = L.map(containerRef.current, { zoomControl: true, doubleClickZoom: false }).setView([-2.5, 118], 5);
+    const map = L.map(containerRef.current, { zoomControl: false, doubleClickZoom: false }).setView([-2.5, 118], 5);
+    L.control.zoom({ position: "bottomright" }).addTo(map);
     mapRef.current = map;
     return () => {
       map.remove();
@@ -410,13 +411,8 @@ function ExportPreviewMap({
       },
     });
 
-    const control = new FocusControl({ position: "topleft" });
+    const control = new FocusControl({ position: "bottomright" });
     control.addTo(map);
-    const el = control.getContainer();
-    const zoomEl = map.zoomControl?.getContainer();
-    if (el && zoomEl && zoomEl.parentNode) {
-      zoomEl.parentNode.insertBefore(el, zoomEl);
-    }
     return () => {
       control.remove();
     };
