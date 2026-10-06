@@ -3,6 +3,7 @@ import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import LogoCropper from "./LogoCropper";
+import { renderLogoPng } from "../lib/renderLogo";
 import LogoPreview from "./LogoPreview";
 import ExportPreviewMap from "./ExportPreviewMap";
 import { invoke } from "@tauri-apps/api/core";
@@ -219,6 +220,10 @@ function ExportPanel({
 
     try {
       const basemapResolved = await resolveExportBasemap(config, exportConfig, outputDir);
+      const logoPng =
+        exportConfig.exportLogoPath && exportConfig.exportLogoCrop
+          ? await renderLogoPng(convertFileSrc(exportConfig.exportLogoPath), exportConfig.exportLogoCrop)
+          : null;
       const message = await invoke<string>("export_web_gis", {
         projectPath,
         outputDir,
@@ -233,6 +238,7 @@ function ExportPanel({
           label_positions: labelPositions,
           export_title: exportConfig.exportTitle,
           export_logo_path: exportConfig.exportLogoPath,
+          export_logo_png: logoPng ? Array.from(logoPng) : null,
         },
       });
       setResultMessage(message);

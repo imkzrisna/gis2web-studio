@@ -1040,6 +1040,7 @@ struct ExportConfig {
     label_font_size: f64,
     export_title: Option<String>,
     export_logo_path: Option<String>,
+    export_logo_png: Option<Vec<u8>>,
     label_positions: Option<std::collections::HashMap<String, (f64, f64)>>,
 }
 
@@ -2356,7 +2357,18 @@ fn export_web_gis(
         1,
     );
 
-    if let Some(logo_path) = config.export_logo_path.as_deref().filter(|p| !p.is_empty()) {
+    if let Some(png) = config.export_logo_png.as_deref().filter(|b| !b.is_empty()) {
+        let assets_dir = output_root.join("assets");
+        std::fs::create_dir_all(&assets_dir)
+            .map_err(|e| format!("Gagal membuat folder assets: {e}"))?;
+        std::fs::write(assets_dir.join("favicon.png"), png)
+            .map_err(|e| format!("Gagal menulis favicon: {e}"))?;
+        index_html = index_html.replacen(
+            "<link rel=\"stylesheet\" href=\"css/style.css\" />",
+            "<link rel=\"icon\" type=\"image/png\" href=\"assets/favicon.png\" />\n<link rel=\"stylesheet\" href=\"css/style.css\" />",
+            1,
+        );
+    } else if let Some(logo_path) = config.export_logo_path.as_deref().filter(|p| !p.is_empty()) {
         let ext = Path::new(logo_path)
             .extension()
             .and_then(|e| e.to_str())

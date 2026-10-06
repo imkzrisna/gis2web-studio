@@ -1,5 +1,4 @@
 import { sanitizeLabelPositions, type LabelPositions } from "./lib/labelPositions";
-import { sanitizeLogoCrop } from "./lib/logoCrop";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
@@ -116,6 +115,7 @@ function App() {
   useEffect(() => {
     loadedPathRef.current = null;
     setLabelPositions({});
+    setExportConfig((prev) => ({ ...prev, exportTitle: "", exportLogoPath: null, exportLogoCrop: null }));
     if (!projectPath) return;
     let cancelled = false;
 
@@ -152,13 +152,9 @@ function App() {
                 minZoom,
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
-                exportTitle: typeof e.exportTitle === "string" ? e.exportTitle.slice(0, 120) : "",
-                exportLogoCrop:
-                  typeof e.exportLogoPath === "string" && e.exportLogoPath
-                    ? sanitizeLogoCrop(e.exportLogoCrop)
-                    : null,
-                exportLogoPath:
-                  typeof e.exportLogoPath === "string" && e.exportLogoPath ? e.exportLogoPath : null,
+                exportTitle: "",
+                exportLogoCrop: null,
+                exportLogoPath: null,
               });
             }
           } catch (err) {
@@ -182,7 +178,12 @@ function App() {
     const timeout = window.setTimeout(() => {
       invoke("save_project_settings", {
         projectPath,
-        json: JSON.stringify({ version: 1, config, exportConfig, labelPositions }),
+        json: JSON.stringify({
+          version: 1,
+          config,
+          exportConfig: { ...exportConfig, exportTitle: "", exportLogoPath: null, exportLogoCrop: null },
+          labelPositions,
+        }),
       }).catch((err) => console.error("Gagal menyimpan pengaturan project:", err));
     }, 500);
     return () => window.clearTimeout(timeout);
