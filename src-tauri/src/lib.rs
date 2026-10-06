@@ -1040,6 +1040,7 @@ struct ExportConfig {
     label_font_size: f64,
     export_title: Option<String>,
     export_logo_path: Option<String>,
+    label_positions: Option<std::collections::HashMap<String, (f64, f64)>>,
 }
 
 fn escape_export_html(s: &str) -> String {
@@ -2206,6 +2207,8 @@ function loadLayer(layer) {{
                 className: 'layer-feature-label',
               }});
               layerInstance.once('tooltipopen', (e) => {{
+                const savedPos = CONFIG.labelPositions && CONFIG.labelPositions[layer.layerIndex + ':' + featureIndex];
+                if (savedPos) e.tooltip.setLatLng(L.latLng(savedPos[0], savedPos[1]));
                 const tooltipEl = e.tooltip.getElement();
                 if (tooltipEl) {{
                   tooltipEl.style.fontSize = (CONFIG.labelFontSize || 13) + 'px';
@@ -2332,6 +2335,7 @@ fn export_web_gis(
     let config_json = serde_json::json!({
         "layers": layer_entries,
         "labelFontSize": config.label_font_size,
+        "labelPositions": config.label_positions,
         "basemap": {
             "url": config.tile_url,
             "attribution": config.attribution,

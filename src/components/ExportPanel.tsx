@@ -230,6 +230,7 @@ function ExportPanel({
           tile_url: basemapResolved.tile_url,
           attribution: basemapResolved.attribution,
           label_font_size: exportConfig.labelFontSize,
+          label_positions: labelPositions,
           export_title: exportConfig.exportTitle,
           export_logo_path: exportConfig.exportLogoPath,
         },
