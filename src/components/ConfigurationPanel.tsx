@@ -41,6 +41,7 @@ export interface ExportConfig {
   labelFontSize: number;
   exportTitle: string;
   exportLogoPath: string | null;
+  exportLogoData: string | null;
 }
 
 interface ConfigurationPanelProps {

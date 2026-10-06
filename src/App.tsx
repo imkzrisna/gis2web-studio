@@ -102,6 +102,7 @@ function App() {
     labelFontSize: 13,
     exportTitle: "",
     exportLogoPath: null,
+    exportLogoData: null,
   });
   const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
 
@@ -146,6 +147,10 @@ function App() {
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
                 exportTitle: typeof e.exportTitle === "string" ? e.exportTitle.slice(0, 120) : "",
+                exportLogoData:
+                  typeof e.exportLogoData === "string" && e.exportLogoData.startsWith("data:image/png")
+                    ? e.exportLogoData
+                    : null,
                 exportLogoPath:
                   typeof e.exportLogoPath === "string" && e.exportLogoPath ? e.exportLogoPath : null,
               });
