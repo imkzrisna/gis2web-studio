@@ -1,4 +1,4 @@
-import { attachLabelDrag, type LabelDragCtx } from "../lib/labelDrag";
+import { attachLabelDrag, isLabelPositionAllowed, type LabelDragCtx } from "../lib/labelDrag";
 import type { LabelPositions } from "../lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
@@ -194,10 +194,12 @@ function ExportPreviewMap({
                 const tooltipEl = tooltip.getElement();
                 const labelKey = `${index}:${featureIndex}`;
                 const saved = labelPositionsRef.current[labelKey];
-                if (saved) tooltip.setLatLng(L.latLng(saved[0], saved[1]));
+                if (saved && isLabelPositionAllowed(feature.geometry, saved[0], saved[1])) {
+                  tooltip.setLatLng(L.latLng(saved[0], saved[1]));
+                }
                 if (tooltipEl) {
                   tooltipEl.style.fontSize = `${exportConfig.labelFontSize}px`;
-                  attachLabelDrag(tooltipEl, tooltip, layerInstance, labelKey, labelDragCtx);
+                  attachLabelDrag(tooltipEl, tooltip, layerInstance, labelKey, labelDragCtx, feature.geometry);
                 }
               });
             }
