@@ -1503,6 +1503,61 @@ fn build_style_css() -> String {
   white-space: nowrap;
 }
 
+.legend-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  font-style: normal;
+}
+
+.legend-swatch--point {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-swatch--line {
+  height: 3px;
+  border: none;
+  border-radius: 2px;
+}
+
+.legend-swatch--boundary {
+  background: transparent;
+  border-width: 2px;
+}
+
+.legend-entries {
+  margin: 0 0 0.35rem 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid #e7e7ee;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.legend-entries[hidden] {
+  display: none;
+}
+
+.legend-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.18rem 0;
+  font-size: 0.78rem;
+  color: #52525b;
+}
+
+.legend-entry span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .leaflet-tooltip.layer-feature-label {
   background: transparent;
   border: none;
@@ -2091,6 +2146,61 @@ function setLayerToggleCollapsed(collapsed) {{
 
 layerToggleCollapseBtn.addEventListener('click', () => setLayerToggleCollapsed(!layerToggleCollapsed));
 
+// ---- Legenda: menyatu dengan panel Layer. Warna memakai data yang sama
+// dengan peta (categories / ranges), jadi selalu konsisten. ----
+function legendKind(layerCfg) {{
+  const g = String(layerCfg.geometryType || '').toLowerCase();
+  if (g.indexOf('point') !== -1) return 'point';
+  if (g.indexOf('line') !== -1) return 'line';
+  return 'area';
+}}
+
+function legendFill(color, opacity) {{
+  const m = /^#?([0-9a-f]{{6}})$/i.exec(color || '');
+  if (!m) return color;
+  const n = parseInt(m[1], 16);
+  const a = Math.max(0.35, opacity == null ? 0.35 : opacity);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}}
+
+function makeLegendSwatch(layerCfg, color) {{
+  const s = document.createElement('i');
+  const kind = layerCfg.isBoundary ? 'boundary' : legendKind(layerCfg);
+  s.className = 'legend-swatch legend-swatch--' + kind;
+  if (kind === 'boundary') {{
+    s.style.borderColor = color;
+  }} else if (kind === 'line') {{
+    s.style.background = color;
+  }} else {{
+    s.style.background = legendFill(color, layerCfg.opacity);
+    s.style.borderColor = color;
+  }}
+  return s;
+}}
+
+function buildLegendEntries(layerCfg) {{
+  if (layerCfg.isBoundary) return null;
+  let entries = null;
+  if (layerCfg.categoryField && layerCfg.categories && layerCfg.categories.length > 0) {{
+    entries = layerCfg.categories.map((c) => ({{ label: c.value === 'NULL' ? '(kosong)' : c.value, color: c.color }}));
+  }} else if (layerCfg.categoryField && layerCfg.ranges && layerCfg.ranges.length > 0) {{
+    entries = layerCfg.ranges.map((r) => ({{ label: r.label, color: r.color }}));
+  }}
+  if (!entries) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'legend-entries';
+  entries.forEach((en) => {{
+    const row = document.createElement('div');
+    row.className = 'legend-entry';
+    row.appendChild(makeLegendSwatch(layerCfg, en.color));
+    const t = document.createElement('span');
+    t.textContent = en.label;
+    row.appendChild(t);
+    wrap.appendChild(row);
+  }});
+  return wrap;
+}}
+
 function renderLayerTogglePanel() {{
   if (CONFIG.layers.length === 0) return;
   layerTogglePanelEl.hidden = false;
@@ -2127,7 +2237,22 @@ function renderLayerTogglePanel() {{
 
     item.appendChild(checkbox);
     item.appendChild(label);
-    layerToggleListEl.appendChild(item);
+
+    const group = document.createElement('div');
+    group.className = 'layer-toggle-group';
+    group.appendChild(item);
+
+    if (CONFIG.showLegend !== false) {{
+      const legendEl = buildLegendEntries(layerCfg);
+      if (legendEl) {{
+        legendEl.hidden = !checkbox.checked;
+        checkbox.addEventListener('change', () => {{ legendEl.hidden = !checkbox.checked; }});
+        group.appendChild(legendEl);
+      }} else {{
+        item.insertBefore(makeLegendSwatch(layerCfg, layerCfg.color), label);
+      }}
+    }}
+    layerToggleListEl.appendChild(group);
   }});
 }}
 
