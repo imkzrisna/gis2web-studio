@@ -41,6 +41,7 @@ export interface ExportConfig {
   maxZoom: number;
   labelFontSize: number;
   exportTitle: string;
+  showLegend: boolean;
   exportLogoPath: string | null;
   exportLogoCrop: LogoCrop | null;
 }

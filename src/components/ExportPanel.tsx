@@ -237,6 +237,7 @@ function ExportPanel({
           label_font_size: exportConfig.labelFontSize,
           label_positions: labelPositions,
           export_title: exportConfig.exportTitle,
+          show_legend: exportConfig.showLegend,
           export_logo_path: exportConfig.exportLogoPath,
           export_logo_png: logoPng ? Array.from(logoPng) : null,
         },
@@ -306,6 +307,17 @@ function ExportPanel({
             <span className="config-slider-bound">{LABEL_FONT_SIZE_MAX}</span>
           </div>
           <div className="config-slider-value">{exportConfig.labelFontSize}px</div>
+        </div>
+
+        <div className="config-slider-block">
+          <label className="config-checkbox-row">
+            <input
+              type="checkbox"
+              checked={exportConfig.showLegend}
+              onChange={(e) => onExportConfigChange({ ...exportConfig, showLegend: e.target.checked })}
+            />
+            Tampilkan Legenda
+          </label>
         </div>
       </section>
 

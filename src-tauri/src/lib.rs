@@ -1042,6 +1042,7 @@ struct ExportConfig {
     export_logo_path: Option<String>,
     export_logo_png: Option<Vec<u8>>,
     label_positions: Option<std::collections::HashMap<String, (f64, f64)>>,
+    show_legend: Option<bool>,
 }
 
 fn escape_export_html(s: &str) -> String {
@@ -2337,6 +2338,7 @@ fn export_web_gis(
         "layers": layer_entries,
         "labelFontSize": config.label_font_size,
         "labelPositions": config.label_positions,
+        "showLegend": config.show_legend.unwrap_or(true),
         "basemap": {
             "url": config.tile_url,
             "attribution": config.attribution,

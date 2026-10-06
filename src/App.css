@@ -2102,3 +2102,11 @@ button {
   outline-offset: 2px;
   border-radius: 3px;
 }
+
+.config-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
