@@ -1,3 +1,4 @@
+import ExportPreviewLegend from "./ExportPreviewLegend";
 import { attachLabelDrag, isLabelPositionAllowed, type LabelDragCtx } from "../lib/labelDrag";
 import type { LabelPositions } from "../lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
@@ -458,6 +459,21 @@ function ExportPreviewMap({
   return (
     <div className={"export-preview-map-wrap" + (labelEdit ? " label-edit-mode" : "")}>
       <div ref={containerRef} className="export-preview-map" />
+      {exportConfig.showLegend && (
+        <ExportPreviewLegend
+          layers={layers}
+          indexes={[
+            ...layerOrder.filter((i) => selectedLayerIndexes.includes(i) || i === boundaryLayerIndex),
+            ...[...selectedLayerIndexes, ...(boundaryLayerIndex !== null ? [boundaryLayerIndex] : [])].filter(
+              (i, pos, arr) => !layerOrder.includes(i) && arr.indexOf(i) === pos
+            ),
+          ]}
+          boundaryLayerIndex={boundaryLayerIndex}
+          layerColors={layerColors}
+          layerCategoryColors={layerCategoryColors}
+          layerOpacities={layerOpacities}
+        />
+      )}
       {layers.some((l) => l.labeling) && (
         <button
           type="button"

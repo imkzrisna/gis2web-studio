@@ -2110,3 +2110,113 @@ button {
   font-size: 0.9rem;
   cursor: pointer;
 }
+
+/* Legenda di Preview Export (meniru panel Layer + legenda hasil export) */
+.export-preview-legend {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  width: 210px;
+  max-width: calc(100% - 2rem);
+  max-height: calc(100% - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e7e7ee;
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(16, 16, 30, 0.16);
+}
+
+.export-preview-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #e7e7ee;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #18181b;
+}
+
+.export-preview-legend-header button {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #e7e7ee;
+  background: #fafafa;
+  color: #71717a;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.export-preview-legend-list {
+  padding: 0.5rem 0.75rem 0.6rem;
+  overflow-y: auto;
+}
+
+.export-preview-legend-layer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 0.82rem;
+  color: #18181b;
+}
+
+.export-preview-legend-layer span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-preview-legend .legend-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+}
+
+.export-preview-legend .legend-swatch--point {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.export-preview-legend .legend-swatch--line {
+  height: 3px;
+  border: none;
+  border-radius: 2px;
+}
+
+.export-preview-legend .legend-swatch--boundary {
+  background: transparent;
+  border-width: 2px;
+}
+
+.export-preview-legend .legend-entries {
+  margin: 0 0 0.3rem 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid #e7e7ee;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.export-preview-legend .legend-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.18rem 0;
+  font-size: 0.78rem;
+  color: #52525b;
+}
+
+.export-preview-legend .legend-entry span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
