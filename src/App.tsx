@@ -1,6 +1,7 @@
 import { sanitizeLabelPositions, type LabelPositions } from "./lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { SCALE_BAR_SEGMENTS_DEFAULT, clampScaleBarSegments } from "./lib/scaleBar";
 import "./App.css";
 import MapView from "./components/MapView";
 import ProjectPanel, { type LayerInfo } from "./components/ProjectPanel";
@@ -123,6 +124,8 @@ function App() {
     maxZoom: 18,
     labelFontSize: 13,
     showLegend: true,
+    showScaleBar: true,
+    scaleBarSegments: SCALE_BAR_SEGMENTS_DEFAULT,
     exportTitle: "",
     exportLogoPath: null,
     exportLogoCrop: null,
@@ -175,6 +178,8 @@ function App() {
                 maxZoom,
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
                 showLegend: e.showLegend !== false,
+                showScaleBar: e.showScaleBar !== false,
+                scaleBarSegments: clampScaleBarSegments(e.scaleBarSegments),
                 exportTitle: "",
                 exportLogoCrop: null,
                 exportLogoPath: null,

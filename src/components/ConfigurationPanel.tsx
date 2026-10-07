@@ -42,6 +42,8 @@ export interface ExportConfig {
   labelFontSize: number;
   exportTitle: string;
   showLegend: boolean;
+  showScaleBar: boolean;
+  scaleBarSegments: number;
   exportLogoPath: string | null;
   exportLogoCrop: LogoCrop | null;
 }

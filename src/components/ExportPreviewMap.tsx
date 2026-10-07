@@ -3,6 +3,7 @@ import { attachLabelDrag, isLabelPositionAllowed, type LabelDragCtx } from "../l
 import type { LabelPositions } from "../lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
+import { scaleBarGradient } from "../lib/scaleBar";
 import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, ExportConfig } from "./ConfigurationPanel";
 import { getCachedGeojson } from "../lib/layerGeojsonCache";
@@ -449,6 +450,19 @@ function ExportPreviewMap({
 
     return () => window.clearTimeout(timeout);
   }, [exportConfig.minZoom, exportConfig.maxZoom, projectPath]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !exportConfig.showScaleBar) return;
+    const control = L.control
+      .scale({ position: "bottomleft", metric: true, imperial: false, maxWidth: 120 })
+      .addTo(map);
+    const line = control.getContainer()?.querySelector<HTMLElement>(".leaflet-control-scale-line");
+    line?.style.setProperty("--sb-bg", scaleBarGradient(exportConfig.scaleBarSegments));
+    return () => {
+      control.remove();
+    };
+  }, [exportConfig.showScaleBar, exportConfig.scaleBarSegments]);
 
   useEffect(() => {
     const t = window.setTimeout(() => mapRef.current?.invalidateSize(), 50);

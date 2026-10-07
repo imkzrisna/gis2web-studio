@@ -2230,3 +2230,45 @@ button {
   min-width: 0;
   word-break: break-word;
 }
+
+/* === Scale Bar (GIS2Web Studio) === */
+.leaflet-control-scale.leaflet-control {
+  padding: 6px 9px 7px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+}
+.leaflet-control-scale .leaflet-control-scale-line {
+  position: relative;
+  margin: 0;
+  padding: 0 0 9px;
+  border: 0;
+  background: none;
+  color: #0f172a;
+  font: 600 11px/14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-shadow: none;
+  white-space: nowrap;
+  overflow: visible;
+}
+.leaflet-control-scale .leaflet-control-scale-line::before {
+  content: '0';
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.leaflet-control-scale .leaflet-control-scale-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  box-sizing: border-box;
+  border: 1px solid #1e293b;
+  border-radius: 1px;
+  background: var(--sb-bg, linear-gradient(90deg, #ffffff 0 25%, #1e293b 25% 50%, #ffffff 50% 75%, #1e293b 75% 100%));
+}
+/* === end Scale Bar === */

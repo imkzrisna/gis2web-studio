@@ -1045,6 +1045,8 @@ struct ExportConfig {
     export_logo_png: Option<Vec<u8>>,
     label_positions: Option<std::collections::HashMap<String, (f64, f64)>>,
     show_legend: Option<bool>,
+    show_scale_bar: Option<bool>,
+    scale_bar_segments: Option<u32>,
 }
 
 fn escape_export_html(s: &str) -> String {
@@ -1254,6 +1256,48 @@ fn build_style_css() -> String {
     font-size: 0.85rem;
   }
 }
+
+/* === Scale Bar (GIS2Web Studio) === */
+.leaflet-control-scale.leaflet-control {
+  padding: 6px 9px 7px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+}
+.leaflet-control-scale .leaflet-control-scale-line {
+  position: relative;
+  margin: 0;
+  padding: 0 0 9px;
+  border: 0;
+  background: none;
+  color: #0f172a;
+  font: 600 11px/14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-shadow: none;
+  white-space: nowrap;
+  overflow: visible;
+}
+.leaflet-control-scale .leaflet-control-scale-line::before {
+  content: '0';
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.leaflet-control-scale .leaflet-control-scale-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  box-sizing: border-box;
+  border: 1px solid #1e293b;
+  border-radius: 1px;
+  background: var(--sb-bg, linear-gradient(90deg, #ffffff 0 25%, #1e293b 25% 50%, #ffffff 50% 75%, #1e293b 75% 100%));
+}
+/* === end Scale Bar === */
 
 .leaflet-popup-content-wrapper {
   border-radius: 12px;
@@ -1633,6 +1677,19 @@ const FocusBoundaryControl = L.Control.extend({{
   }},
 }});
 new FocusBoundaryControl({{ position: 'bottomright' }}).addTo(map);
+
+if (CONFIG.showScaleBar !== false) {{
+  const scaleCtl = L.control.scale({{ position: 'bottomleft', metric: true, imperial: false, maxWidth: 120 }}).addTo(map);
+  const sbSegs = Math.max(2, Math.min(6, Math.round(Number(CONFIG.scaleBarSegments) || 4)));
+  const sbLine = scaleCtl.getContainer().querySelector('.leaflet-control-scale-line');
+  if (sbLine) {{
+    const sbStops = [];
+    for (let i = 0; i < sbSegs; i++) {{
+      sbStops.push((i % 2 === 0 ? '#ffffff' : '#1e293b') + ' ' + (i * 100 / sbSegs) + '% ' + ((i + 1) * 100 / sbSegs) + '%');
+    }}
+    sbLine.style.setProperty('--sb-bg', 'linear-gradient(90deg, ' + sbStops.join(', ') + ')');
+  }}
+}}
 
 function addBasemap() {{
   L.tileLayer(CONFIG.basemap.url, {{
@@ -2474,6 +2531,8 @@ fn export_web_gis(
         "labelFontSize": config.label_font_size,
         "labelPositions": config.label_positions,
         "showLegend": config.show_legend.unwrap_or(true),
+        "showScaleBar": config.show_scale_bar.unwrap_or(true),
+        "scaleBarSegments": config.scale_bar_segments.unwrap_or(4).clamp(2, 6),
         "basemap": {
             "url": config.tile_url,
             "attribution": config.attribution,

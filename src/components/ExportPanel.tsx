@@ -7,6 +7,7 @@ import { renderLogoPng } from "../lib/renderLogo";
 import LogoPreview from "./LogoPreview";
 import ExportPreviewMap from "./ExportPreviewMap";
 import { invoke } from "@tauri-apps/api/core";
+import { SCALE_BAR_SEGMENTS_MIN, SCALE_BAR_SEGMENTS_MAX } from "../lib/scaleBar";
 import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, ExportConfig } from "./ConfigurationPanel";
 import {
@@ -242,6 +243,8 @@ function ExportPanel({
           label_positions: labelPositions,
           export_title: exportConfig.exportTitle,
           show_legend: exportConfig.showLegend,
+          show_scale_bar: exportConfig.showScaleBar,
+          scale_bar_segments: exportConfig.scaleBarSegments,
           export_logo_path: exportConfig.exportLogoPath,
           export_logo_png: logoPng ? Array.from(logoPng) : null,
         },
@@ -322,6 +325,34 @@ function ExportPanel({
             />
             Tampilkan Legenda
           </label>
+        </div>
+
+        <div className="config-slider-block">
+          <label className="config-checkbox-row">
+            <input
+              type="checkbox"
+              checked={exportConfig.showScaleBar}
+              onChange={(e) => onExportConfigChange({ ...exportConfig, showScaleBar: e.target.checked })}
+            />
+            Tampilkan Scale Bar
+          </label>
+        </div>
+
+        <div className="config-slider-block">
+          <label className="config-slider-label">Jumlah Segmen Scale Bar</label>
+          <div className="config-slider-row">
+            <span className="config-slider-bound">{SCALE_BAR_SEGMENTS_MIN}</span>
+            <input
+              type="range"
+              min={SCALE_BAR_SEGMENTS_MIN}
+              max={SCALE_BAR_SEGMENTS_MAX}
+              value={exportConfig.scaleBarSegments}
+              disabled={!exportConfig.showScaleBar}
+              onChange={(e) => onExportConfigChange({ ...exportConfig, scaleBarSegments: Number(e.target.value) })}
+            />
+            <span className="config-slider-bound">{SCALE_BAR_SEGMENTS_MAX}</span>
+          </div>
+          <div className="config-slider-value">{exportConfig.scaleBarSegments} segmen</div>
         </div>
       </section>
 
