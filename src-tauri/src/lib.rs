@@ -1424,16 +1424,17 @@ fn build_style_css() -> String {
   left: 1rem;
   z-index: 1000;
   background: #ffffff;
-  border-radius: 18px;
-  box-shadow: 0 12px 36px rgba(16, 16, 30, 0.16);
-  border: 1px solid #e7e7ee;
-  width: 220px;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  width: 230px;
   max-width: calc(100vw - 2rem);
   max-height: calc(100% - 2rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-family: -apple-system, "Inter", Helvetica, Arial, sans-serif;
+  font-size: 0.8rem;
 }
 
 .layer-toggle-panel[hidden] {
@@ -1444,36 +1445,38 @@ fn build_style_css() -> String {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.7rem 0.75rem;
-  border-bottom: 1px solid #e7e7ee;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #e4e4e7;
   flex-shrink: 0;
 }
 
 .layer-toggle-title {
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.8rem;
   color: #18181b;
 }
 
 .layer-toggle-collapse-btn {
-  background: #fafafa;
-  border: 1px solid #e7e7ee;
-  font-size: 0.75rem;
-  cursor: pointer;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   color: #71717a;
+  font-size: 0.6rem;
+  cursor: pointer;
 }
 
 .layer-toggle-collapse-btn:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background: #f4f4f5;
+  color: #18181b;
 }
 
 .layer-toggle-list {
-  padding: 0.6rem 0.75rem;
+  padding: 0.35rem 0.6rem 0.45rem;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .layer-toggle-list[hidden] {
@@ -1483,24 +1486,25 @@ fn build_style_css() -> String {
 .layer-toggle-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  font-size: 0.82rem;
+  gap: 0.45rem;
+  padding: 0.2rem 0;
+  line-height: 1.3;
   color: #18181b;
+  cursor: pointer;
 }
 
 .layer-toggle-item input[type="checkbox"] {
   accent-color: #2563eb;
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
+  margin: 0;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .layer-toggle-item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .legend-swatch {
@@ -1509,21 +1513,24 @@ fn build_style_css() -> String {
   width: 14px;
   height: 14px;
   box-sizing: border-box;
-  border: 1.5px solid transparent;
-  border-radius: 3px;
+  border: 1px solid transparent;
+  border-radius: 2px;
   font-style: normal;
 }
 
 .legend-swatch--point {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
+  margin: 0 2px;
   border-radius: 50%;
 }
 
 .legend-swatch--line {
+  width: 16px;
   height: 3px;
+  margin: 0 -1px;
   border: none;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 .legend-swatch--boundary {
@@ -1532,11 +1539,10 @@ fn build_style_css() -> String {
 }
 
 .legend-entries {
-  margin: 0 0 0.35rem 0.4rem;
-  padding-left: 0.6rem;
-  border-left: 2px solid #e7e7ee;
+  margin: 0 0 0.25rem 1.35rem;
   max-height: 9rem;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .legend-entries[hidden] {
@@ -1547,15 +1553,15 @@ fn build_style_css() -> String {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.18rem 0;
+  padding: 0.1rem 0;
   font-size: 0.78rem;
-  color: #52525b;
+  line-height: 1.3;
+  color: #3f3f46;
 }
 
 .legend-entry span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .leaflet-tooltip.layer-feature-label {
