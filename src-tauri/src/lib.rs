@@ -1025,6 +1025,8 @@ struct ExportLayerInput {
     ranges: Option<Vec<ExportRangeInput>>,
     labeling: Option<ExportLabelingInput>,
     visible_fields: Option<Vec<String>>,
+    #[serde(default)]
+    field_aliases: Option<std::collections::HashMap<String, String>>,
     is_boundary: bool,
     show_attribute_table: bool,
 }
@@ -1681,7 +1683,7 @@ function resolveFeatureColor(layer, feature) {{
   return layer.color;
 }}
 
-function buildFieldsTable(properties, visibleFields) {{
+function buildFieldsTable(properties, visibleFields, fieldAliases) {{
   if (!properties || Object.keys(properties).length === 0) return null;
   const allKeys = Object.keys(properties);
   const fieldsToShow = Array.isArray(visibleFields)
@@ -1691,7 +1693,8 @@ function buildFieldsTable(properties, visibleFields) {{
 
   return fieldsToShow.map((key) => {{
     const value = properties[key];
-    return {{ key, value: value === null || value === undefined ? '-' : String(value) }};
+    const alias = fieldAliases && fieldAliases[key];
+    return {{ key, label: alias || key, value: value === null || value === undefined ? '-' : String(value) }};
   }});
 }}
 
@@ -1706,7 +1709,7 @@ function showFeatureCard(layerName, rows) {{
   cardTitleEl.textContent = 'Feature Information';
   cardSubtitleEl.textContent = layerName;
   cardTableEl.innerHTML = rows
-    ? rows.map((r) => `<tr><th>${{escapeHtml(r.key)}}</th><td>${{escapeHtml(r.value)}}</td></tr>`).join('')
+    ? rows.map((r) => `<tr><th>${{escapeHtml(r.label)}}</th><td>${{escapeHtml(r.value)}}</td></tr>`).join('')
     : '<tr><td>Tidak ada atribut.</td></tr>';
   cardEl.hidden = false;
 }}
@@ -1901,7 +1904,7 @@ function selectFeature(layerIndex, featureIndex, latlng) {{
   const layerConfig = CONFIG.layers.find((l) => l.layerIndex === layerIndex);
   const geojsonData = layerGeojsonData[layerIndex];
   const feature = geojsonData ? geojsonData.features[featureIndex] : null;
-  const rows = layerConfig && feature ? buildFieldsTable(feature.properties, layerConfig.visibleFields) : null;
+  const rows = layerConfig && feature ? buildFieldsTable(feature.properties, layerConfig.visibleFields, layerConfig.fieldAliases) : null;
 
   showFeatureCard(layerConfig ? layerConfig.name : '', rows);
 
@@ -2460,6 +2463,7 @@ fn export_web_gis(
             "ranges": ranges_json,
             "labeling": labeling_json,
             "visibleFields": layer.visible_fields,
+            "fieldAliases": layer.field_aliases,
             "isBoundary": layer.is_boundary,
             "showAttributeTable": layer.show_attribute_table && !layer.is_boundary,
         }));

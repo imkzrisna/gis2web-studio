@@ -67,6 +67,7 @@ interface ExportLayerInput {
   ranges: ExportRangeInput[] | null;
   labeling: ExportLabelingInput | null;
   visible_fields: string[] | null;
+  field_aliases: Record<string, string> | null;
   is_boundary: boolean;
   show_attribute_table: boolean;
 }
@@ -205,6 +206,7 @@ function ExportPanel({
           ranges,
           labeling,
           visible_fields: layerVisibleFields[index] ?? null,
+          field_aliases: layerFieldAliases[index] ?? null,
           is_boundary: isBoundary,
           show_attribute_table: isBoundary ? false : (layerAttributeTableEnabled[index] ?? false),
         };
