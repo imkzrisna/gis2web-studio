@@ -28,6 +28,7 @@ interface ExportPanelProps {
   layerPointSizes: Record<number, number>;
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
+  layerFieldAliases: Record<number, Record<string, string>>;
   layerAttributeTableEnabled: Record<number, boolean>;
   labelPositions: LabelPositions;
   onLabelPositionsChange: (positions: LabelPositions) => void;
@@ -125,6 +126,7 @@ function ExportPanel({
   layerPointSizes,
   layerOrder,
   layerVisibleFields,
+  layerFieldAliases,
   layerAttributeTableEnabled,
   labelPositions,
   onLabelPositionsChange,
@@ -461,6 +463,7 @@ function ExportPanel({
           layerPointSizes={layerPointSizes}
           layerOrder={layerOrder}
           layerVisibleFields={layerVisibleFields}
+          layerFieldAliases={layerFieldAliases}
           labelPositions={labelPositions}
           onLabelPositionsChange={onLabelPositionsChange}
           config={config}

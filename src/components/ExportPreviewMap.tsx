@@ -22,6 +22,7 @@ interface ExportPreviewMapProps {
   layerPointSizes: Record<number, number>;
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
+  layerFieldAliases: Record<number, Record<string, string>>;
   config: WebGisConfig;
   exportConfig: ExportConfig;
   device?: "desktop" | "mobile";
@@ -43,6 +44,7 @@ function ExportPreviewMap({
   layerPointSizes,
   layerOrder,
   layerVisibleFields,
+  layerFieldAliases,
   config,
   exportConfig,
   device = "desktop",
@@ -63,8 +65,8 @@ function ExportPreviewMap({
     matches: [],
     index: 0,
   });
-  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerPointSizes });
-  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerPointSizes };
+  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes });
+  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes };
   const [labelEdit, setLabelEdit] = useState(false);
   const labelEditRef = useRef(false);
   const labelPositionsRef = useRef<LabelPositions>(labelPositions);
@@ -78,7 +80,7 @@ function ExportPreviewMap({
     getPositions: () => labelPositionsRef.current,
     setPositions: (p) => onLabelPositionsChangeRef.current(p),
   };
-  const [card, setCard] = useState<{ layerName: string; rows: { key: string; value: string }[] } | null>(null);
+  const [card, setCard] = useState<{ layerName: string; rows: { key: string; label: string; value: string }[] } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -354,9 +356,10 @@ function ExportPreviewMap({
       const selectedFields = ctx.layerVisibleFields[sel.layerIndex];
       const allKeys = props ? Object.keys(props) : [];
       const fieldsToShow = selectedFields ? selectedFields.filter((f) => allKeys.includes(f)) : allKeys;
+      const aliases = ctx.layerFieldAliases[sel.layerIndex] ?? {};
       const rows = fieldsToShow.map((key) => {
         const value = props ? props[key] : undefined;
-        return { key, value: value === null || value === undefined ? "-" : String(value) };
+        return { key, label: aliases[key] || key, value: value === null || value === undefined ? "-" : String(value) };
       });
       setCard({ layerName: layer?.name ?? "", rows });
       map.closePopup();
@@ -495,7 +498,7 @@ function ExportPreviewMap({
                 <tr><td>Tidak ada atribut.</td></tr>
               ) : (
                 card.rows.map((r) => (
-                  <tr key={r.key}><th>{r.key}</th><td>{r.value}</td></tr>
+                  <tr key={r.key}><th>{r.label}</th><td>{r.value}</td></tr>
                 ))
               )}
             </tbody>

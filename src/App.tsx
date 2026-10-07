@@ -432,6 +432,7 @@ function App() {
               layerPointSizes={layerPointSizes}
               layerOrder={layerOrder}
               layerVisibleFields={layerVisibleFields}
+              layerFieldAliases={layerFieldAliases}
               layerAttributeTableEnabled={layerAttributeTableEnabled}
               labelPositions={labelPositions}
               onLabelPositionsChange={setLabelPositions}
