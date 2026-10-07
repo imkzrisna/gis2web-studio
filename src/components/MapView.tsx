@@ -23,6 +23,7 @@ interface MapViewProps {
   activeFeature: { layerIndex: number; featureIndex: number } | null;
   onFocusFeature: (layerIndex: number, featureIndex: number) => void;
   visibleFields: Record<number, string[]>;
+  fieldAliases: Record<number, Record<string, string>>;
   featureDisplayMode: FeatureDisplayMode;
 }
 
@@ -119,6 +120,7 @@ function MapView({
   activeFeature,
   onFocusFeature,
   visibleFields,
+  fieldAliases,
   featureDisplayMode,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -145,6 +147,7 @@ function MapView({
     boundaryLayerIndexRef.current = boundaryLayerIndex;
   }, [boundaryLayerIndex]);
   const visibleFieldsRef = useRef<Record<number, string[]>>(visibleFields);
+  const fieldAliasesRef = useRef<Record<number, Record<string, string>>>(fieldAliases);
   const featureDisplayModeRef = useRef<FeatureDisplayMode>(featureDisplayMode);
 
   useEffect(() => {
@@ -173,7 +176,8 @@ function MapView({
 
   useEffect(() => {
     visibleFieldsRef.current = visibleFields;
-  }, [visibleFields]);
+    fieldAliasesRef.current = fieldAliases;
+  }, [visibleFields, fieldAliases]);
 
   useEffect(() => {
     featureDisplayModeRef.current = featureDisplayMode;
@@ -586,6 +590,7 @@ function MapView({
               if (!isBoundary && properties && Object.keys(properties).length > 0) {
                 layerInstance.bindPopup(() => {
                   const selectedFields = visibleFieldsRef.current[index];
+                  const aliases = fieldAliasesRef.current[index] ?? {};
                   const allKeys = Object.keys(properties);
                   const fieldsToShow = selectedFields
                     ? selectedFields.filter((f) => allKeys.includes(f))
@@ -598,7 +603,7 @@ function MapView({
                   const rows = fieldsToShow
                     .map((key) => {
                       const value = properties[key];
-                      return `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(
+                      return `<tr><th>${escapeHtml(aliases[key] || key)}</th><td>${escapeHtml(
                         value === null || value === undefined ? "-" : String(value)
                       )}</td></tr>`;
                     })
@@ -817,7 +822,7 @@ function MapView({
         anyLayer.getPopup?.()?.update();
       }
     }
-  }, [visibleFields, activeFeature, featureDisplayMode]);
+  }, [visibleFields, fieldAliases, activeFeature, featureDisplayMode]);
 
   // Visual feedback: feature yang diklik mendapat strong highlight,
   // feature lain di layer yang sama mendapat subtle highlight,

@@ -81,6 +81,27 @@ function App() {
   >(null);
   const [attributeTableCollapsed, setAttributeTableCollapsed] = useState(true);
   const [layerVisibleFields, setLayerVisibleFields] = useState<Record<number, string[]>>({});
+  const [layerFieldAliases, setLayerFieldAliases] = useState<
+    Record<number, Record<string, string>>
+  >({});
+
+  function handleFieldAliasChange(layerIndex: number, field: string, alias: string) {
+    setLayerFieldAliases((prev) => {
+      const layerAliases = { ...(prev[layerIndex] ?? {}) };
+      if (alias.trim() === "") {
+        delete layerAliases[field];
+      } else {
+        layerAliases[field] = alias;
+      }
+      const next = { ...prev };
+      if (Object.keys(layerAliases).length === 0) {
+        delete next[layerIndex];
+      } else {
+        next[layerIndex] = layerAliases;
+      }
+      return next;
+    });
+  }
 
   function handleVisibleFieldsChange(layerIndex: number, fields: string[] | null) {
     setLayerVisibleFields((prev) => {
@@ -342,6 +363,7 @@ function App() {
                   activeFeature={activeFeature}
                   onFocusFeature={handleFocusFeature}
                   visibleFields={layerVisibleFields}
+                  fieldAliases={layerFieldAliases}
                   featureDisplayMode="card"
                 />
                 <FeatureInfoCard
@@ -352,6 +374,8 @@ function App() {
                   onOpenFullTable={() => setAttributeTableCollapsed(false)}
                   visibleFields={layerVisibleFields}
                   onVisibleFieldsChange={handleVisibleFieldsChange}
+                  fieldAliases={layerFieldAliases}
+                  onFieldAliasChange={handleFieldAliasChange}
                 />
                 <AttributeTablePanel
                   projectPath={projectPath}

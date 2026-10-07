@@ -11,6 +11,8 @@ interface FeatureInfoCardProps {
   onOpenFullTable: () => void;
   visibleFields: Record<number, string[]>;
   onVisibleFieldsChange: (layerIndex: number, fields: string[] | null) => void;
+  fieldAliases: Record<number, Record<string, string>>;
+  onFieldAliasChange: (layerIndex: number, field: string, alias: string) => void;
 }
 
 function FeatureInfoCard({
@@ -21,6 +23,8 @@ function FeatureInfoCard({
   onOpenFullTable,
   visibleFields,
   onVisibleFieldsChange,
+  fieldAliases,
+  onFieldAliasChange,
 }: FeatureInfoCardProps) {
   const layer = activeFeature ? layers[activeFeature.layerIndex] : undefined;
   const [fetchedText, setFetchedText] = useState<string | null>(null);
@@ -97,6 +101,7 @@ function FeatureInfoCard({
   const layerIndex = activeFeature.layerIndex;
   const selectedFields = visibleFields[layerIndex];
   const activeFields = selectedFields ?? allFields;
+  const layerAliases = fieldAliases[layerIndex] ?? {};
 
   const entries = activeFields
     .filter((field) => Object.prototype.hasOwnProperty.call(properties, field))
@@ -180,6 +185,18 @@ function FeatureInfoCard({
                             onChange={() => toggleField(field)}
                           />
                           <span>{field}</span>
+                          {activeFields.includes(field) && (
+                            <input
+                              type="text"
+                              className="feature-info-card-alias-input"
+                              placeholder="Alias (opsional)"
+                              value={layerAliases[field] ?? ""}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                onFieldAliasChange(layerIndex, field, e.target.value)
+                              }
+                            />
+                          )}
                         </label>
                       ))
                     )}
@@ -211,7 +228,7 @@ function FeatureInfoCard({
             <tbody>
               {entries.map(([key, value]) => (
                 <tr key={key}>
-                  <th>{key}</th>
+                  <th>{layerAliases[key] || key}</th>
                   <td>
                     {value === null || value === undefined ? "-" : String(value)}
                   </td>
