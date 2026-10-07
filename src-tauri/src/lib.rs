@@ -1684,7 +1684,7 @@ function resolveFeatureColor(layer, feature) {{
 function buildFieldsTable(properties, visibleFields) {{
   if (!properties || Object.keys(properties).length === 0) return null;
   const allKeys = Object.keys(properties);
-  const fieldsToShow = visibleFields && visibleFields.length > 0
+  const fieldsToShow = Array.isArray(visibleFields)
     ? visibleFields.filter((f) => allKeys.includes(f))
     : allKeys;
   if (fieldsToShow.length === 0) return null;
