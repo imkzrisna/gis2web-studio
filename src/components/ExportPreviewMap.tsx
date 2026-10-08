@@ -454,7 +454,7 @@ function ExportPreviewMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !exportConfig.showScaleBar) return;
-    const control = createFixedScaleControl().addTo(map);
+    const control = createFixedScaleControl(exportConfig.scaleBarSegments).addTo(map);
     const line = control.getContainer()?.querySelector<HTMLElement>(".leaflet-control-scale-line");
     line?.style.setProperty("--sb-bg", scaleBarGradient(exportConfig.scaleBarSegments));
     return () => {

@@ -22,25 +22,39 @@ export function scaleBarGradient(segments: number): string {
   return `linear-gradient(90deg, ${stops.join(", ")})`;
 }
 
-// Jarak asli untuk lebar bar tetap, 2 angka signifikan (mis. 13 km, 430 m).
-// Harus sama dengan logika di generated app.js (lib.rs).
-export function formatScaleDistance(maxMeters: number): string {
-  const raw = Number(maxMeters.toPrecision(2));
-  return raw >= 1000 ? `${Number((raw / 1000).toPrecision(2))} km` : `${raw} m`;
+// N segmen -> N+1 label (0 ... total). Jarak total = maxMeters dari Leaflet
+// untuk lebar bar tetap. Harus sama dengan logika di generated app.js (lib.rs).
+export function scaleTicksHtml(maxMeters: number, segments: number): string {
+  const n = clampScaleBarSegments(segments);
+  const useKm = maxMeters >= 1000;
+  const total = useKm ? maxMeters / 1000 : maxMeters;
+  const step = total / n;
+  const d = step >= 10 ? 0 : step >= 1 ? 1 : 2;
+  let html = '<div class="sb-ticks">';
+  for (let i = 0; i <= n; i++) {
+    const v = Number((step * i).toFixed(d));
+    html +=
+      '<span class="sb-tick" style="left:' + (i * 100) / n + '%">' + v +
+      (i === n ? '<span class="sb-unit">' + (useKm ? "km" : "m") + "</span>" : "") +
+      "</span>";
+  }
+  return html + "</div>";
 }
 
 // Scale control Leaflet dengan lebar bar tetap. maxMeters tetap dihitung Leaflet.
 const FixedWidthScale = L.Control.Scale.extend({
   _updateMetric(this: any, maxMeters: number) {
-    this._updateScale(this._mScale, formatScaleDistance(maxMeters), 1);
+    this._mScale.style.width = this.options.maxWidth + "px";
+    this._mScale.innerHTML = scaleTicksHtml(maxMeters, this.options.segments);
   },
 });
 
-export function createFixedScaleControl(): L.Control.Scale {
+export function createFixedScaleControl(segments: number): L.Control.Scale {
   return new (FixedWidthScale as any)({
     position: "bottomleft",
     metric: true,
     imperial: false,
     maxWidth: SCALE_BAR_WIDTH_PX,
+    segments: clampScaleBarSegments(segments),
   });
 }

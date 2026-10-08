@@ -1259,7 +1259,7 @@ fn build_style_css() -> String {
 
 /* === Scale Bar (GIS2Web Studio) === */
 .leaflet-control-scale.leaflet-control {
-  padding: 7px 10px 8px;
+  padding: 8px 10px 9px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
@@ -1267,23 +1267,40 @@ fn build_style_css() -> String {
 }
 .leaflet-control-scale .leaflet-control-scale-line {
   position: relative;
-  margin: 0;
-  padding: 0 0 9px;
+  margin: 0 28px 0 0;
+  padding: 0 0 5px;
   border: 0;
   background: none;
   color: #0f172a;
-  font: 600 11px/14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font: 600 10px/11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: left;
   text-shadow: none;
   white-space: nowrap;
   overflow: visible;
 }
-.leaflet-control-scale .leaflet-control-scale-line::before {
-  content: '0';
+.leaflet-control-scale .sb-ticks {
+  position: relative;
+  height: 17px;
+}
+.leaflet-control-scale .sb-tick {
   position: absolute;
-  left: 0;
   top: 0;
+  transform: translateX(-50%);
+}
+.leaflet-control-scale .sb-tick::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 13px;
+  height: 4px;
+  border-left: 1px solid #1e293b;
+}
+.leaflet-control-scale .sb-unit {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 2px;
 }
 .leaflet-control-scale .leaflet-control-scale-line::after {
   content: '';
@@ -1681,13 +1698,24 @@ new FocusBoundaryControl({{ position: 'bottomright' }}).addTo(map);
 if (CONFIG.showScaleBar !== false) {{
   const FixedScale = L.Control.Scale.extend({{
     _updateMetric: function (maxMeters) {{
-      const raw = Number(maxMeters.toPrecision(2));
-      const label = raw >= 1000 ? Number((raw / 1000).toPrecision(2)) + ' km' : raw + ' m';
-      this._updateScale(this._mScale, label, 1);
+      const n = Math.max(2, Math.min(6, Math.round(Number(this.options.segments) || 4)));
+      const useKm = maxMeters >= 1000;
+      const total = useKm ? maxMeters / 1000 : maxMeters;
+      const step = total / n;
+      const d = step >= 10 ? 0 : step >= 1 ? 1 : 2;
+      let html = '<div class="sb-ticks">';
+      for (let i = 0; i <= n; i++) {{
+        const v = Number((step * i).toFixed(d));
+        html += '<span class="sb-tick" style="left:' + (i * 100 / n) + '%">' + v +
+          (i === n ? '<span class="sb-unit">' + (useKm ? 'km' : 'm') + '</span>' : '') + '</span>';
+      }}
+      html += '</div>';
+      this._mScale.style.width = this.options.maxWidth + 'px';
+      this._mScale.innerHTML = html;
     }},
   }});
-  const scaleCtl = new FixedScale({{ position: 'bottomleft', metric: true, imperial: false, maxWidth: 150 }}).addTo(map);
   const sbSegs = Math.max(2, Math.min(6, Math.round(Number(CONFIG.scaleBarSegments) || 4)));
+  const scaleCtl = new FixedScale({{ position: 'bottomleft', metric: true, imperial: false, maxWidth: 150, segments: sbSegs }}).addTo(map);
   const sbLine = scaleCtl.getContainer().querySelector('.leaflet-control-scale-line');
   if (sbLine) {{
     const sbStops = [];
