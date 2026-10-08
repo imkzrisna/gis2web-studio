@@ -2233,7 +2233,7 @@ button {
 
 /* === Scale Bar (GIS2Web Studio) === */
 .leaflet-control-scale.leaflet-control {
-  padding: 6px 9px 7px;
+  padding: 7px 10px 8px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);

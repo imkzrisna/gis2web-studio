@@ -1259,7 +1259,7 @@ fn build_style_css() -> String {
 
 /* === Scale Bar (GIS2Web Studio) === */
 .leaflet-control-scale.leaflet-control {
-  padding: 6px 9px 7px;
+  padding: 7px 10px 8px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
@@ -1679,7 +1679,14 @@ const FocusBoundaryControl = L.Control.extend({{
 new FocusBoundaryControl({{ position: 'bottomright' }}).addTo(map);
 
 if (CONFIG.showScaleBar !== false) {{
-  const scaleCtl = L.control.scale({{ position: 'bottomleft', metric: true, imperial: false, maxWidth: 120 }}).addTo(map);
+  const FixedScale = L.Control.Scale.extend({{
+    _updateMetric: function (maxMeters) {{
+      const raw = Number(maxMeters.toPrecision(2));
+      const label = raw >= 1000 ? Number((raw / 1000).toPrecision(2)) + ' km' : raw + ' m';
+      this._updateScale(this._mScale, label, 1);
+    }},
+  }});
+  const scaleCtl = new FixedScale({{ position: 'bottomleft', metric: true, imperial: false, maxWidth: 150 }}).addTo(map);
   const sbSegs = Math.max(2, Math.min(6, Math.round(Number(CONFIG.scaleBarSegments) || 4)));
   const sbLine = scaleCtl.getContainer().querySelector('.leaflet-control-scale-line');
   if (sbLine) {{
