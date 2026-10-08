@@ -1220,8 +1220,8 @@ fn build_style_css() -> String {
   color: #a1a1aa;
   font-weight: 600;
   font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  text-transform: none;
+  letter-spacing: normal;
   width: 42%;
   padding-right: 0.6rem;
 }
@@ -1495,8 +1495,8 @@ fn build_style_css() -> String {
   background: #fafafa;
   color: #a1a1aa;
   font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .attribute-data-table tbody tr {

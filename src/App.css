@@ -1323,8 +1323,8 @@ button {
   background: var(--color-surface-alt);
   color: var(--color-text-faint);
   font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .attribute-data-table tbody tr {
@@ -1439,8 +1439,8 @@ button {
   color: var(--color-text-faint);
   font-weight: 600;
   font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  text-transform: none;
+  letter-spacing: normal;
   width: 42%;
   padding-right: 0.6rem;
 }
