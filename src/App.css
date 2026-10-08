@@ -1676,6 +1676,47 @@ button {
   white-space: nowrap;
 }
 
+.feature-info-card-column-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  cursor: text;
+}
+
+.feature-info-card-column-name-alias {
+  font-weight: 600;
+  min-width: 0;
+}
+
+.feature-info-card-column-name-original {
+  font-size: 0.7rem;
+  color: var(--color-text-faint);
+  min-width: 0;
+}
+
+.feature-info-card-alias-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.feature-info-card-column-hint {
+  flex-shrink: 0;
+  padding: 0.45rem 0.7rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  color: var(--color-text-faint);
+  text-align: center;
+}
+
 .feature-popup-empty {
   margin: 0;
   padding: 0.4rem 0.2rem;

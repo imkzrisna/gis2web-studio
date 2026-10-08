@@ -31,6 +31,9 @@ function FeatureInfoCard({
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [columnSearchQuery, setColumnSearchQuery] = useState("");
   const columnPickerRef = useRef<HTMLDivElement | null>(null);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const editCancelledRef = useRef(false);
 
   useEffect(() => {
     setFetchedText(null);
@@ -74,6 +77,7 @@ function FeatureInfoCard({
   useEffect(() => {
     if (!columnPickerOpen) {
       setColumnSearchQuery("");
+      setEditingField(null);
     }
   }, [columnPickerOpen]);
 
@@ -121,6 +125,27 @@ function FeatureInfoCard({
 
   function clearAllFields() {
     onVisibleFieldsChange(layerIndex, []);
+  }
+
+  function startEditAlias(field: string) {
+    if (!activeFields.includes(field)) return;
+    editCancelledRef.current = false;
+    setEditDraft(layerAliases[field] ?? "");
+    setEditingField(field);
+  }
+
+  function commitEditAlias(field: string) {
+    if (editCancelledRef.current) {
+      editCancelledRef.current = false;
+      return;
+    }
+    onFieldAliasChange(layerIndex, field, editDraft.trim());
+    setEditingField(null);
+  }
+
+  function cancelEditAlias() {
+    editCancelledRef.current = true;
+    setEditingField(null);
   }
 
   return (
@@ -178,28 +203,69 @@ function FeatureInfoCard({
                       </div>
                     ) : (
                       displayedFields.map((field) => (
-                        <label key={field} className="feature-info-card-column-item">
+                        <div
+                          key={field}
+                          className="feature-info-card-column-item"
+                          title={
+                            activeFields.includes(field)
+                              ? "Klik dua kali untuk ubah alias"
+                              : undefined
+                          }
+                        >
                           <input
                             type="checkbox"
                             checked={activeFields.includes(field)}
                             onChange={() => toggleField(field)}
                           />
-                          <span>{field}</span>
-                          {activeFields.includes(field) && (
+                          {editingField === field ? (
                             <input
                               type="text"
                               className="feature-info-card-alias-input"
-                              placeholder="Alias (opsional)"
-                              value={layerAliases[field] ?? ""}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) =>
-                                onFieldAliasChange(layerIndex, field, e.target.value)
-                              }
+                              autoFocus
+                              value={editDraft}
+                              placeholder={field}
+                              onFocus={(e) => e.currentTarget.select()}
+                              onChange={(e) => setEditDraft(e.target.value)}
+                              onBlur={() => commitEditAlias(field)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  commitEditAlias(field);
+                                } else if (e.key === "Escape") {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  cancelEditAlias();
+                                }
+                              }}
                             />
+                          ) : (
+                            <span
+                              className="feature-info-card-column-name"
+                              onClick={() => toggleField(field)}
+                              onDoubleClick={() => startEditAlias(field)}
+                            >
+                              {layerAliases[field] ? (
+                                <>
+                                  <span className="feature-info-card-column-name-alias">
+                                    {layerAliases[field]}
+                                  </span>
+                                  <span className="feature-info-card-column-name-original">
+                                    {field}
+                                  </span>
+                                </>
+                              ) : (
+                                field
+                              )}
+                            </span>
                           )}
-                        </label>
+                        </div>
                       ))
                     )}
+                  </div>
+                  <div className="feature-info-card-column-hint">
+                    {editingField
+                      ? "Enter = simpan \u00b7 Esc = batal"
+                      : "Klik dua kali nama kolom untuk ubah alias"}
                   </div>
                 </div>
               )}
