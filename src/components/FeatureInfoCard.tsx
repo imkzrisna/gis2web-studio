@@ -206,11 +206,6 @@ function FeatureInfoCard({
                         <div
                           key={field}
                           className="feature-info-card-column-item"
-                          title={
-                            activeFields.includes(field)
-                              ? "Klik dua kali untuk ubah alias"
-                              : undefined
-                          }
                         >
                           <input
                             type="checkbox"
@@ -241,8 +236,6 @@ function FeatureInfoCard({
                           ) : (
                             <span
                               className="feature-info-card-column-name"
-                              onClick={() => toggleField(field)}
-                              onDoubleClick={() => startEditAlias(field)}
                             >
                               {layerAliases[field] ? (
                                 <>
@@ -258,6 +251,20 @@ function FeatureInfoCard({
                               )}
                             </span>
                           )}
+                          {editingField !== field && activeFields.includes(field) && (
+                            <button
+                              type="button"
+                              className="feature-info-card-alias-edit-btn"
+                              title="Ubah alias"
+                              aria-label={`Ubah alias ${field}`}
+                              onClick={() => startEditAlias(field)}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       ))
                     )}
@@ -265,7 +272,7 @@ function FeatureInfoCard({
                   <div className="feature-info-card-column-hint">
                     {editingField
                       ? "Enter = simpan \u00b7 Esc = batal"
-                      : "Klik dua kali nama kolom untuk ubah alias"}
+                      : "Klik ikon pensil untuk ubah alias"}
                   </div>
                 </div>
               )}

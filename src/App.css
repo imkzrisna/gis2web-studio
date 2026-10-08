@@ -1655,7 +1655,7 @@ button {
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   color: var(--color-text);
-  cursor: pointer;
+  cursor: default;
 }
 
 .feature-info-card-column-item:hover {
@@ -1682,7 +1682,7 @@ button {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
-  cursor: text;
+  cursor: default;
 }
 
 .feature-info-card-column-name-alias {
@@ -1715,6 +1715,26 @@ button {
   font-size: 0.7rem;
   color: var(--color-text-faint);
   text-align: center;
+}
+
+.feature-info-card-alias-edit-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-faint);
+  cursor: pointer;
+}
+
+.feature-info-card-alias-edit-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-primary);
 }
 
 .feature-popup-empty {
