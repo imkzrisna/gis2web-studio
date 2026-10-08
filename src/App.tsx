@@ -72,7 +72,6 @@ function App() {
   const [boundaryLayerIndex, setBoundaryLayerIndex] = useState<number | null>(null);
   const [layerColors, setLayerColors] = useState<Record<number, string>>({});
   const [layerCategoryColors, setLayerCategoryColors] = useState<Record<number, Record<string, string>>>({});
-  const [layerAttributeTableEnabled, setLayerAttributeTableEnabled] = useState<Record<number, boolean>>({});
   const [layerOpacities, setLayerOpacities] = useState<Record<number, number>>({});
   const [layerPointSizes, setLayerPointSizes] = useState<Record<number, number>>({});
   const [layerOrder, setLayerOrder] = useState<number[]>([]);
@@ -125,6 +124,7 @@ function App() {
     labelFontSize: 13,
     showLegend: true,
     showScaleBar: true,
+    showFullTable: true,
     scaleBarSegments: SCALE_BAR_SEGMENTS_DEFAULT,
     exportTitle: "",
     exportLogoPath: null,
@@ -179,6 +179,7 @@ function App() {
                 labelFontSize: clamp(e.labelFontSize, LABEL_FONT_SIZE_MIN, LABEL_FONT_SIZE_MAX, 13),
                 showLegend: e.showLegend !== false,
                 showScaleBar: e.showScaleBar !== false,
+                showFullTable: e.showFullTable !== false,
                 scaleBarSegments: clampScaleBarSegments(e.scaleBarSegments),
                 exportTitle: "",
                 exportLogoCrop: null,
@@ -247,7 +248,6 @@ function App() {
     });
     setLayerColors(initialColors);
     setLayerCategoryColors(initialCategoryColors);
-    setLayerAttributeTableEnabled({});
 
     setLayerOrder(newLayers.map((_, i) => i));
     setActiveLayerIndex(null);
@@ -264,16 +264,9 @@ function App() {
     }));
   }
 
-  function handleAttributeTableToggle(index: number, enabled: boolean) {
-    setLayerAttributeTableEnabled((prev) => ({ ...prev, [index]: enabled }));
-  }
-
   function handleBoundaryLayerIndexChange(index: number | null) {
     setBoundaryLayerIndex(index);
     setActiveFeature((prev) => (prev && prev.layerIndex === index ? null : prev));
-    if (index !== null) {
-      setLayerAttributeTableEnabled((prev) => ({ ...prev, [index]: false }));
-    }
     setLayerOrder((prev) => enforceBoundaryAtBack(prev, index));
   }
 
@@ -298,7 +291,6 @@ function App() {
     .map((_, i) => i)
     .filter(
       (i) =>
-        layerAttributeTableEnabled[i] &&
         boundaryLayerIndex !== i &&
         selectedLayerIndexes.includes(i)
     );
@@ -382,15 +374,17 @@ function App() {
                   fieldAliases={layerFieldAliases}
                   onFieldAliasChange={handleFieldAliasChange}
                 />
-                <AttributeTablePanel
-                  projectPath={projectPath}
-                  layers={layers}
-                  enabledLayerIndexes={enabledAttributeTableLayerIndexes}
-                  activeFeature={activeFeature}
-                  onFocusFeature={handleFocusFeature}
-                  collapsed={attributeTableCollapsed}
-                  onCollapsedChange={setAttributeTableCollapsed}
-                />
+                {!attributeTableCollapsed && (
+                  <AttributeTablePanel
+                    projectPath={projectPath}
+                    layers={layers}
+                    enabledLayerIndexes={enabledAttributeTableLayerIndexes}
+                    activeFeature={activeFeature}
+                    onFocusFeature={handleFocusFeature}
+                    collapsed={attributeTableCollapsed}
+                    onCollapsedChange={setAttributeTableCollapsed}
+                  />
+                )}
                 <ProjectPanel
                   projectPath={projectPath}
                   layers={layers}
@@ -409,8 +403,6 @@ function App() {
                   onLayerOpacityChange={handleLayerOpacityChange}
                   layerPointSizes={layerPointSizes}
                   onLayerPointSizeChange={handleLayerPointSizeChange}
-                  layerAttributeTableEnabled={layerAttributeTableEnabled}
-                  onAttributeTableToggle={handleAttributeTableToggle}
                   layerOrder={layerOrder}
                   onLayerOrderChange={handleLayerOrderChange}
                   activeLayerIndex={activeLayerIndex}
@@ -438,7 +430,6 @@ function App() {
               layerOrder={layerOrder}
               layerVisibleFields={layerVisibleFields}
               layerFieldAliases={layerFieldAliases}
-              layerAttributeTableEnabled={layerAttributeTableEnabled}
               labelPositions={labelPositions}
               onLabelPositionsChange={setLabelPositions}
               config={config}

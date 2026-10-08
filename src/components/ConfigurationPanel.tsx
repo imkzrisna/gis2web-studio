@@ -43,6 +43,7 @@ export interface ExportConfig {
   exportTitle: string;
   showLegend: boolean;
   showScaleBar: boolean;
+  showFullTable: boolean;
   scaleBarSegments: number;
   exportLogoPath: string | null;
   exportLogoCrop: LogoCrop | null;

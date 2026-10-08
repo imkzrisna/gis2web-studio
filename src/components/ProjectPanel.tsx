@@ -49,8 +49,6 @@ interface ProjectPanelProps {
   onLayerOpacityChange: (index: number, opacity: number) => void;
   layerPointSizes: Record<number, number>;
   onLayerPointSizeChange: (index: number, size: number) => void;
-  layerAttributeTableEnabled: Record<number, boolean>;
-  onAttributeTableToggle: (index: number, enabled: boolean) => void;
   layerOrder: number[];
   onLayerOrderChange: (order: number[]) => void;
   activeLayerIndex: number | null;
@@ -78,8 +76,6 @@ function ProjectPanel({
   onLayerOpacityChange,
   layerPointSizes,
   onLayerPointSizeChange,
-  layerAttributeTableEnabled,
-  onAttributeTableToggle,
   layerOrder,
   onLayerOrderChange,
   activeLayerIndex,
@@ -325,7 +321,6 @@ function ProjectPanel({
                           <th>Warna</th>
                           <th>Opacity</th>
                           <th>Ukuran Point</th>
-                          <th>Attribute Table</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -425,23 +420,6 @@ function ProjectPanel({
                                   </>
                                 ) : (
                                   <span className="layer-note">-</span>
-                                )}
-                              </td>
-                              <td onClick={(e) => e.stopPropagation()}>
-                                {isBoundary ? (
-                                  <span className="layer-note">-</span>
-                                ) : (
-                                  <label className="attribute-table-toggle">
-                                    <input
-                                      type="checkbox"
-                                      checked={layerAttributeTableEnabled[index] ?? false}
-                                      onChange={(e) =>
-                                        onAttributeTableToggle(index, e.target.checked)
-                                      }
-                                      title="Tampilkan Attribute Table untuk layer ini"
-                                    />
-                                    <span className="attribute-table-toggle-label">Tampilkan</span>
-                                  </label>
                                 )}
                               </td>
                             </tr>

@@ -1047,6 +1047,7 @@ struct ExportConfig {
     show_legend: Option<bool>,
     show_scale_bar: Option<bool>,
     scale_bar_segments: Option<u32>,
+    show_full_table: Option<bool>,
 }
 
 fn escape_export_html(s: &str) -> String {
@@ -1080,6 +1081,9 @@ fn build_index_html() -> String {
   </div>
   <div class="feature-info-card-body">
     <table id="feature-info-card-table" class="feature-info-card-table"></table>
+  </div>
+  <div id="feature-info-card-footer" class="feature-info-card-footer" hidden>
+    <button type="button" id="feature-info-card-full-table-btn" class="feature-info-card-full-table-btn">Lihat tabel lengkap</button>
   </div>
 </div>
 <div id="layer-toggle-panel" class="layer-toggle-panel" hidden>
@@ -1170,6 +1174,28 @@ fn build_style_css() -> String {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.feature-info-card-footer {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid #e7e7ee;
+}
+
+.feature-info-card-full-table-btn {
+  width: 100%;
+  padding: 0.6rem;
+  background: #ffffff;
+  border: 1px solid #e7e7ee;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #18181b;
+  cursor: pointer;
+}
+
+.feature-info-card-full-table-btn:hover {
+  background: #fafafa;
 }
 
 .feature-info-card-close {
@@ -2257,7 +2283,20 @@ function setAttributeTableCollapsed(collapsed) {{
   attrToggleBtn.innerHTML = collapsed ? '&#9650;' : '&#9660;';
 }}
 
-attrToggleBtn.addEventListener('click', () => setAttributeTableCollapsed(!attrCollapsed));
+function openAttributeTablePanel() {{
+  if (attributeTableLayers.length === 0) return;
+  attrPanelEl.hidden = false;
+  setAttributeTableCollapsed(false);
+  syncAttributeTableToActiveFeature();
+  renderAttributeTableRows();
+}}
+
+function closeAttributeTablePanel() {{
+  attrPanelEl.hidden = true;
+  setAttributeTableCollapsed(true);
+}}
+
+attrToggleBtn.addEventListener('click', closeAttributeTablePanel);
 
 attrLayerSelectEl.addEventListener('change', (e) => {{
   attrSelectedLayerIndex = Number(e.target.value);
@@ -2277,10 +2316,11 @@ function syncAttributeTableToActiveFeature() {{
   renderAttributeTableRows();
 }}
 
-if (attributeTableLayers.length > 0) {{
-  attrPanelEl.hidden = false;
+if (attributeTableLayers.length > 0 && CONFIG.showFullTable !== false) {{
   renderAttributeTableOptions();
   setAttributeTableCollapsed(true);
+  document.getElementById('feature-info-card-footer').hidden = false;
+  document.getElementById('feature-info-card-full-table-btn').addEventListener('click', openAttributeTablePanel);
 }}
 
 // ---- Layer visibility toggle: on/off tampil di peta, murni interaksi
@@ -2619,6 +2659,7 @@ fn export_web_gis(
         "labelPositions": config.label_positions,
         "showLegend": config.show_legend.unwrap_or(true),
         "showScaleBar": config.show_scale_bar.unwrap_or(true),
+        "showFullTable": config.show_full_table.unwrap_or(true),
         "scaleBarSegments": config.scale_bar_segments.unwrap_or(4).clamp(2, 6),
         "basemap": {
             "url": config.tile_url,

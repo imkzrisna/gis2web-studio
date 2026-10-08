@@ -30,7 +30,6 @@ interface ExportPanelProps {
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
   layerFieldAliases: Record<number, Record<string, string>>;
-  layerAttributeTableEnabled: Record<number, boolean>;
   labelPositions: LabelPositions;
   onLabelPositionsChange: (positions: LabelPositions) => void;
   config: WebGisConfig;
@@ -129,7 +128,6 @@ function ExportPanel({
   layerOrder,
   layerVisibleFields,
   layerFieldAliases,
-  layerAttributeTableEnabled,
   labelPositions,
   onLabelPositionsChange,
   config,
@@ -209,7 +207,7 @@ function ExportPanel({
           visible_fields: layerVisibleFields[index] ?? null,
           field_aliases: layerFieldAliases[index] ?? null,
           is_boundary: isBoundary,
-          show_attribute_table: isBoundary ? false : (layerAttributeTableEnabled[index] ?? false),
+          show_attribute_table: !isBoundary,
         };
       });
   }
@@ -244,6 +242,7 @@ function ExportPanel({
           export_title: exportConfig.exportTitle,
           show_legend: exportConfig.showLegend,
           show_scale_bar: exportConfig.showScaleBar,
+          show_full_table: exportConfig.showFullTable,
           scale_bar_segments: exportConfig.scaleBarSegments,
           export_logo_path: exportConfig.exportLogoPath,
           export_logo_png: logoPng ? Array.from(logoPng) : null,
@@ -335,6 +334,17 @@ function ExportPanel({
               onChange={(e) => onExportConfigChange({ ...exportConfig, showScaleBar: e.target.checked })}
             />
             Tampilkan Scale Bar
+          </label>
+        </div>
+
+        <div className="config-slider-block">
+          <label className="config-checkbox-row">
+            <input
+              type="checkbox"
+              checked={exportConfig.showFullTable}
+              onChange={(e) => onExportConfigChange({ ...exportConfig, showFullTable: e.target.checked })}
+            />
+            Tampilkan Tabel Atribut Lengkap
           </label>
         </div>
 

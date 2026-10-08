@@ -81,7 +81,8 @@ function ExportPreviewMap({
     getPositions: () => labelPositionsRef.current,
     setPositions: (p) => onLabelPositionsChangeRef.current(p),
   };
-  const [card, setCard] = useState<{ layerName: string; rows: { key: string; label: string; value: string }[] } | null>(null);
+  const [card, setCard] = useState<{ layerName: string; layerIndex: number; featureIndex: number; rows: { key: string; label: string; value: string }[] } | null>(null);
+  const [tableOpen, setTableOpen] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -362,7 +363,7 @@ function ExportPreviewMap({
         const value = props ? props[key] : undefined;
         return { key, label: aliases[key] || key, value: value === null || value === undefined ? "-" : String(value) };
       });
-      setCard({ layerName: layer?.name ?? "", rows });
+      setCard({ layerName: layer?.name ?? "", layerIndex: sel.layerIndex, featureIndex: sel.featureIndex, rows });
       map.closePopup();
     };
 
@@ -502,7 +503,7 @@ function ExportPreviewMap({
               <p className="export-preview-feature-card-title">Feature Information</p>
               <p className="export-preview-feature-card-subtitle">{card.layerName}</p>
             </div>
-            <button type="button" onClick={() => { setCard(null); clearSelectionRef.current(); }}>&times;</button>
+            <button type="button" onClick={() => { setCard(null); setTableOpen(false); clearSelectionRef.current(); }}>&times;</button>
           </div>
           <table className="feature-popup-table">
             <tbody>
@@ -515,8 +516,48 @@ function ExportPreviewMap({
               )}
             </tbody>
           </table>
+          {exportConfig.showFullTable && (
+            <div className="export-preview-feature-card-footer">
+              <button type="button" className="export-preview-full-table-btn" onClick={() => setTableOpen(true)}>Lihat tabel lengkap</button>
+            </div>
+          )}
         </div>
       )}
+      {card && tableOpen && exportConfig.showFullTable && (() => {
+        const fc = geojsonRef.current.get(card.layerIndex);
+        const features = fc?.features ?? [];
+        const fields: string[] = [];
+        features.forEach((f) => {
+          Object.keys((f.properties ?? {}) as Record<string, unknown>).forEach((k) => {
+            if (!fields.includes(k)) fields.push(k);
+          });
+        });
+        return (
+          <div className="export-preview-table-panel">
+            <div className="export-preview-table-header">
+              <span><strong>Attribute Table</strong> {card.layerName} · {features.length} fitur</span>
+              <button type="button" onClick={() => setTableOpen(false)} title="Tutup">{"\u25BC"}</button>
+            </div>
+            <div className="export-preview-table-scroll">
+              <table className="attribute-data-table">
+                <thead>
+                  <tr>{fields.map((f) => <th key={f}>{f}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {features.map((f, i) => (
+                    <tr key={i} className={i === card.featureIndex ? "active-row" : undefined}>
+                      {fields.map((k) => {
+                        const v = (f.properties as Record<string, unknown> | null)?.[k];
+                        return <td key={k}>{v === null || v === undefined ? "-" : String(v)}</td>;
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
