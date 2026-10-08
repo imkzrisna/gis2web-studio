@@ -1314,6 +1314,36 @@ fn build_style_css() -> String {
   border-radius: 1px;
   background: var(--sb-bg, linear-gradient(90deg, #ffffff 0 25%, #1e293b 25% 50%, #ffffff 50% 75%, #1e293b 75% 100%));
 }
+.leaflet-control-scale .sb-unit-toggle {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 5px;
+  background: #ffffff;
+  color: #334155;
+  line-height: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.leaflet-control-scale .sb-unit-toggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.leaflet-control-scale .sb-unit-toggle svg {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.3s ease;
+}
 /* === end Scale Bar === */
 
 .leaflet-popup-content-wrapper {
@@ -1696,13 +1726,35 @@ const FocusBoundaryControl = L.Control.extend({{
 new FocusBoundaryControl({{ position: 'bottomright' }}).addTo(map);
 
 if (CONFIG.showScaleBar !== false) {{
+  const SB_SWAP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>';
   const FixedScale = L.Control.Scale.extend({{
+    onAdd: function (map) {{
+      const container = L.Control.Scale.prototype.onAdd.call(this, map);
+      const btn = L.DomUtil.create('button', 'sb-unit-toggle', container);
+      btn.type = 'button';
+      btn.title = 'Ganti satuan jarak (km / m)';
+      btn.setAttribute('aria-label', 'Ganti satuan jarak (km / m)');
+      btn.innerHTML = SB_SWAP_ICON;
+      L.DomEvent.disableClickPropagation(btn);
+      const self = this;
+      let turns = 0;
+      L.DomEvent.on(btn, 'click', function (ev) {{
+        L.DomEvent.preventDefault(ev);
+        self._forcedUnit = self._shownUnit === 'km' ? 'm' : 'km';
+        turns += 1;
+        if (btn.firstElementChild) btn.firstElementChild.style.transform = 'rotate(' + (turns * 180) + 'deg)';
+        self._update();
+      }});
+      return container;
+    }},
     _updateMetric: function (maxMeters) {{
       const n = Math.max(2, Math.min(6, Math.round(Number(this.options.segments) || 4)));
-      const useKm = maxMeters >= 1000;
+      const unit = this._forcedUnit || 'auto';
+      const useKm = unit === 'km' || (unit !== 'm' && maxMeters >= 1000);
+      this._shownUnit = useKm ? 'km' : 'm';
       const total = useKm ? maxMeters / 1000 : maxMeters;
       const step = total / n;
-      const d = step >= 10 ? 0 : step >= 1 ? 1 : 2;
+      const d = step >= 10 ? 0 : step >= 1 ? 1 : Math.min(4, Math.ceil(-Math.log10(step)) + 1);
       let html = '<div class="sb-ticks">';
       for (let i = 0; i <= n; i++) {{
         const v = Number((step * i).toFixed(d));
