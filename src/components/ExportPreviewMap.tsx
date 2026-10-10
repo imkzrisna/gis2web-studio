@@ -27,6 +27,7 @@ interface ExportPreviewMapProps {
   config: WebGisConfig;
   exportConfig: ExportConfig;
   device?: "desktop" | "mobile";
+  labelEdit?: boolean;
 }
 
 // Preview export murni dari CACHE (hasil prefetch saat import), tidak pernah
@@ -49,6 +50,7 @@ function ExportPreviewMap({
   config,
   exportConfig,
   device = "desktop",
+  labelEdit = false,
 }: ExportPreviewMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -68,7 +70,6 @@ function ExportPreviewMap({
   });
   const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes });
   ctxRef.current = { layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes };
-  const [labelEdit, setLabelEdit] = useState(false);
   const labelEditRef = useRef(false);
   const labelPositionsRef = useRef<LabelPositions>(labelPositions);
   const onLabelPositionsChangeRef = useRef(onLabelPositionsChange);
@@ -485,16 +486,6 @@ function ExportPreviewMap({
           layerCategoryColors={layerCategoryColors}
           layerOpacities={layerOpacities}
         />
-      )}
-      {layers.some((l) => l.labeling) && (
-        <button
-          type="button"
-          className={"label-edit-btn" + (labelEdit ? " on" : "")}
-          onClick={() => setLabelEdit((v) => !v)}
-          title="Tarik label untuk mengatur posisinya. Klik dua kali pada label untuk mengembalikan."
-        >
-          {labelEdit ? "Selesai Atur Label" : "Atur Label"}
-        </button>
       )}
       {card && (
         <div className="export-preview-feature-card">

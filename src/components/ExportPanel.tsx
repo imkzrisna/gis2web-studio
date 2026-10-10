@@ -139,6 +139,7 @@ function ExportPanel({
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [labelEdit, setLabelEdit] = useState(false);
   const [cropPath, setCropPath] = useState<string | null>(null);
 
   const zoomError = exportConfig.maxZoom < exportConfig.minZoom;
@@ -492,6 +493,16 @@ function ExportPanel({
         >
           Mobile
         </button>
+        {layers.some((l) => l.labeling) && (
+          <button
+            type="button"
+            className={"export-preview-tab export-preview-label-btn" + (labelEdit ? " active" : "")}
+            onClick={() => setLabelEdit((v) => !v)}
+            title="Tarik label untuk mengatur posisinya. Klik dua kali pada label untuk mengembalikan."
+          >
+            {labelEdit ? "Selesai Atur Label" : "Atur Label"}
+          </button>
+        )}
       </div>
 
         <div className={previewDevice === "mobile" ? "export-preview-frame--mobile" : "export-preview-frame"}>
@@ -512,6 +523,7 @@ function ExportPanel({
           config={config}
           exportConfig={exportConfig}
           device={previewDevice}
+          labelEdit={labelEdit}
         />
         </div>
     </div>

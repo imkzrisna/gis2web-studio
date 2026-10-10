@@ -2125,29 +2125,6 @@ button {
 /* Atur Label */
 .map-view-wrapper { position: relative; }
 
-.label-edit-btn {
-  position: absolute;
-  top: 0.75rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 0.82rem;
-  font-weight: 600;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
-  cursor: pointer;
-}
-
-.label-edit-btn.on {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #ffffff;
-}
-
 .map-container.label-edit-mode .leaflet-tooltip.layer-feature-label {
   pointer-events: auto;
   cursor: move;
