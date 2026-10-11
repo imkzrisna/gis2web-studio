@@ -49,6 +49,8 @@ interface ProjectPanelProps {
   onLayerOpacityChange: (index: number, opacity: number) => void;
   layerPointSizes: Record<number, number>;
   onLayerPointSizeChange: (index: number, size: number) => void;
+  onResetLayer: (index: number) => void;
+  onResetAllLayers: () => void;
   layerOrder: number[];
   onLayerOrderChange: (order: number[]) => void;
   activeLayerIndex: number | null;
@@ -76,6 +78,8 @@ function ProjectPanel({
   onLayerOpacityChange,
   layerPointSizes,
   onLayerPointSizeChange,
+  onResetLayer,
+  onResetAllLayers,
   layerOrder,
   onLayerOrderChange,
   activeLayerIndex,
@@ -313,7 +317,17 @@ function ProjectPanel({
                     >
                       {"\u2190"} Kembali pilih layer
                     </button>
-                    <h3>Atur Layer Terpilih ({selectedLayerIndexes.length})</h3>
+                    <div className="layer-manage-heading">
+                      <h3>Atur Layer Terpilih ({selectedLayerIndexes.length})</h3>
+                      <button
+                        type="button"
+                        className="layer-reset-all-btn"
+                        onClick={onResetAllLayers}
+                        title="Kembalikan warna, opacity, dan ukuran point semua layer ke awal"
+                      >
+                        Reset Semua
+                      </button>
+                    </div>
                     <table className="layer-table">
                       <thead>
                         <tr>
@@ -321,6 +335,7 @@ function ProjectPanel({
                           <th>Warna</th>
                           <th>Opacity</th>
                           <th>Ukuran Point</th>
+                          <th></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -422,6 +437,16 @@ function ProjectPanel({
                                   <span className="layer-note">-</span>
                                 )}
                               </td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  className="layer-reset-btn"
+                                  onClick={() => onResetLayer(index)}
+                                  title="Reset warna, opacity, dan ukuran point layer ini"
+                                >
+                                  Reset
+                                </button>
+                              </td>
                             </tr>
                           );
                         })}
@@ -438,7 +463,7 @@ function ProjectPanel({
                           const categoryColorMap = layerCategoryColors[index] ?? {};
                           return (
                             <tr key={`categories-${index}`} className="category-subrow">
-                              <td colSpan={4} onClick={(e) => e.stopPropagation()}>
+                              <td colSpan={5} onClick={(e) => e.stopPropagation()}>
                                 <div className="category-subrow-inner">
                                   <span className="category-subrow-title">
                                     Warna per kategori{layer.category_field ? ` (${layer.category_field})` : ""}:
@@ -483,7 +508,7 @@ function ProjectPanel({
                           const rangeColorMap = layerCategoryColors[index] ?? {};
                           return (
                             <tr key={`ranges-${index}`} className="category-subrow">
-                              <td colSpan={4} onClick={(e) => e.stopPropagation()}>
+                              <td colSpan={5} onClick={(e) => e.stopPropagation()}>
                                 <div className="category-subrow-inner">
                                   <span className="category-subrow-title">
                                     Warna per rentang{layer.category_field ? ` (${layer.category_field})` : ""}:

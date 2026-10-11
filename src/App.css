@@ -2414,3 +2414,29 @@ button {
   overflow: auto;
   min-height: 0;
 }
+
+/* Reset layer */
+.layer-manage-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.layer-reset-btn,
+.layer-reset-all-btn {
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.layer-reset-btn:hover,
+.layer-reset-all-btn:hover {
+  background: #fafafa;
+}

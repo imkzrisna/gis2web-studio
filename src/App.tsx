@@ -264,6 +264,44 @@ function App() {
     }));
   }
 
+  function handleResetLayer(index: number) {
+    const layer = layers[index];
+    if (!layer) return;
+    setLayerColors((prev) => {
+      const next = { ...prev };
+      if (layer.color) next[index] = layer.color;
+      else delete next[index];
+      return next;
+    });
+    setLayerCategoryColors((prev) => {
+      const next = { ...prev };
+      if (layer.categories && layer.categories.length > 0) {
+        const catMap: Record<string, string> = {};
+        layer.categories.forEach((cat) => {
+          catMap[cat.value] = cat.color;
+        });
+        next[index] = catMap;
+      } else {
+        delete next[index];
+      }
+      return next;
+    });
+    setLayerOpacities((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    setLayerPointSizes((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  }
+
+  function handleResetAllLayers() {
+    layers.forEach((_, index) => handleResetLayer(index));
+  }
+
   function handleBoundaryLayerIndexChange(index: number | null) {
     setBoundaryLayerIndex(index);
     setActiveFeature((prev) => (prev && prev.layerIndex === index ? null : prev));
@@ -403,6 +441,8 @@ function App() {
                   onLayerOpacityChange={handleLayerOpacityChange}
                   layerPointSizes={layerPointSizes}
                   onLayerPointSizeChange={handleLayerPointSizeChange}
+                  onResetLayer={handleResetLayer}
+                  onResetAllLayers={handleResetAllLayers}
                   layerOrder={layerOrder}
                   onLayerOrderChange={handleLayerOrderChange}
                   activeLayerIndex={activeLayerIndex}
