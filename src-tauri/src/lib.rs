@@ -841,6 +841,101 @@ fn unique_temp_geojson_path() -> PathBuf {
     std::env::temp_dir().join(format!("gis2web_{nanos}.geojson"))
 }
 
+fn shapefile_companion_exists(shp: &Path, ext: &str) -> bool {
+    shp.with_extension(ext).exists() || shp.with_extension(ext.to_uppercase()).exists()
+}
+
+fn run_ogrinfo(path: &str) -> Result<String, String> {
+    let candidates = ["ogrinfo", "/opt/homebrew/bin/ogrinfo", "/usr/local/bin/ogrinfo"];
+    let mut last_error = String::new();
+    for bin in candidates {
+        match Command::new(bin).args(["-so", "-al", path]).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    return Ok(String::from_utf8_lossy(&output.stdout).to_string());
+                }
+                last_error = String::from_utf8_lossy(&output.stderr).to_string();
+            }
+            Err(e) => {
+                last_error = e.to_string();
+            }
+        }
+    }
+    Err(last_error)
+}
+
+#[tauri::command]
+fn inspect_shapefiles(paths: Vec<String>) -> Result<Vec<LayerInfo>, String> {
+    if paths.is_empty() {
+        return Err("Tidak ada file Shapefile yang dipilih".to_string());
+    }
+
+    let mut layers: Vec<LayerInfo> = Vec::new();
+    let mut used_names: Vec<String> = Vec::new();
+
+    for raw in &paths {
+        let shp = Path::new(raw);
+        let is_shp = shp
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("shp"))
+            .unwrap_or(false);
+        if !is_shp {
+            return Err(format!("Bukan file .shp: {raw}"));
+        }
+        if !shp.exists() {
+            return Err(format!("File tidak ditemukan: {raw}"));
+        }
+
+        let stem = shp
+            .file_stem()
+            .and_then(|n| n.to_str())
+            .unwrap_or("layer")
+            .to_string();
+
+        let missing: Vec<String> = ["shx", "dbf", "prj"]
+            .iter()
+            .filter(|ext| !shapefile_companion_exists(shp, ext))
+            .map(|ext| format!("{stem}.{ext}"))
+            .collect();
+        if !missing.is_empty() {
+            return Err(format!(
+                "Shapefile \"{stem}\" tidak lengkap. File pendamping yang hilang: {}",
+                missing.join(", ")
+            ));
+        }
+
+        let info = run_ogrinfo(raw)
+            .map_err(|e| format!("Shapefile \"{stem}\" tidak dapat dibaca: {e}"))?;
+
+        let geometry_raw = info
+            .lines()
+            .find_map(|l| l.trim().strip_prefix("Geometry:").map(|v| v.trim().to_string()))
+            .unwrap_or_default();
+
+        let mut name = stem.clone();
+        let mut counter = 2;
+        while used_names.contains(&name) {
+            name = format!("{stem}_{counter}");
+            counter += 1;
+        }
+        used_names.push(name.clone());
+
+        layers.push(LayerInfo {
+            name,
+            geometry_type: normalize_geometry_type(&geometry_raw),
+            datasource: raw.clone(),
+            color: None,
+            category_field: None,
+            categories: None,
+            ranges: None,
+            labeling: None,
+        });
+    }
+
+    Ok(layers)
+}
+
 #[tauri::command]
 fn get_layer_geojson(project_path: String, datasource: String) -> Result<String, String> {
     if datasource.trim().is_empty() {
@@ -2739,6 +2834,7 @@ pub fn run() {
             load_project_settings,
             save_project_settings,
             generate_tile_pyramid,
+            inspect_shapefiles,
             get_layer_geojson,
             export_web_gis
         ])
