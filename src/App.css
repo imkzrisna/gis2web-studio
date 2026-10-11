@@ -2453,3 +2453,96 @@ button {
   color: var(--color-text);
   font-size: 0.85rem;
 }
+
+/* ===== Import dialog (dua pilihan import) ===== */
+.import-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  padding: 24px;
+}
+.import-dialog {
+  background: var(--surface, #ffffff);
+  color: var(--text, #0f172a);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  width: min(760px, 100%);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 24px;
+  overflow: hidden;
+}
+.import-dialog-header { display: flex; align-items: center; justify-content: space-between; }
+.import-dialog-header h2 { margin: 0; font-size: 18px; }
+.import-close-btn {
+  border: none; background: transparent; font-size: 24px; line-height: 1;
+  cursor: pointer; color: inherit; opacity: 0.6;
+}
+.import-close-btn:hover { opacity: 1; }
+.import-dialog-sub {
+  margin: 6px 0 16px; font-size: 13px; opacity: 0.7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.import-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.import-card {
+  display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px; padding: 18px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+.import-card h3 { margin: 4px 0 0; font-size: 15px; }
+.import-card p { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0.75; flex: 1; }
+.import-card code { font-size: 12px; }
+.import-card-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2ff; color: #4f46e5;
+}
+.import-card-icon--folder { background: #ecfdf5; color: #059669; }
+.import-card-btn {
+  margin-top: 8px; border: none; border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: #4f46e5; color: #fff;
+}
+.import-card-btn--alt { background: #059669; }
+.import-card-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.import-card-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.import-secondary-btn {
+  border: 1px solid var(--border, #cbd5e1); background: transparent; color: inherit;
+  border-radius: 10px; padding: 10px 14px; font-size: 13px; cursor: pointer;
+}
+.import-scanning { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px 0; }
+.import-spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid rgba(100, 116, 139, 0.25); border-top-color: #4f46e5;
+  animation: import-spin 0.8s linear infinite;
+}
+@keyframes import-spin { to { transform: rotate(360deg); } }
+.import-scan-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; }
+.import-scan-row {
+  display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+  border: 1px solid var(--border, #e2e8f0); border-radius: 12px; padding: 12px 14px;
+}
+.import-scan-row--disabled { opacity: 0.7; cursor: default; }
+.import-scan-info { flex: 1; min-width: 0; font-size: 13px; }
+.import-scan-title { display: flex; align-items: center; gap: 8px; }
+.import-scan-meta { margin-top: 3px; opacity: 0.8; }
+.import-scan-file { margin-top: 2px; font-size: 12px; opacity: 0.55; word-break: break-all; }
+.import-scan-msg { margin-top: 4px; font-size: 12px; color: #b45309; }
+.import-scan-msg--error { color: #b91c1c; }
+.import-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.import-badge--ok { background: #dcfce7; color: #166534; }
+.import-badge--warning { background: #fef3c7; color: #92400e; }
+.import-badge--error { background: #fee2e2; color: #991b1b; }
+.import-dialog-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.import-footer-primary { margin-top: 0; }
+.import-error { color: #b91c1c; font-size: 13px; margin: 0 0 12px; }
+.import-warning { color: #b45309; font-size: 13px; margin: 0 0 10px; }
+.import-empty { font-size: 13px; opacity: 0.75; padding: 24px 0; }
+@media (max-width: 640px) { .import-cards { grid-template-columns: 1fr; } }

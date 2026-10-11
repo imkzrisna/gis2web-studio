@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import LayerPreview from "./LayerPreview";
+import CategoryFieldPicker from "./CategoryFieldPicker";
 
 export interface CategoryInfo {
   value: string;
@@ -76,6 +77,7 @@ interface ProjectPanelProps {
   onLayerOrderChange: (order: number[]) => void;
   activeLayerIndex: number | null;
   onFocusLayer: (index: number) => void;
+  onLayerCategoryFieldChange?: (index: number, field: string | null) => void;
 }
 
 type PanelTab = "layers" | "order";
@@ -105,6 +107,7 @@ function ProjectPanel({
   onLayerOrderChange,
   activeLayerIndex,
   onFocusLayer,
+  onLayerCategoryFieldChange,
 }: ProjectPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [panelTab, setPanelTab] = useState<PanelTab>("layers");
@@ -222,8 +225,8 @@ function ProjectPanel({
                 </div>
                 <p className="project-empty-title">Belum ada project</p>
                 <p className="project-empty-text">
-                  Klik "Import Project" di toolbar atas untuk mulai memilih
-                  layer yang ingin dipublikasikan ke Web GIS.
+                  Klik "Import Data GIS" di toolbar atas untuk mengimpor project
+                  QGIS atau folder data GIS, lalu pilih layer yang ingin dipublikasikan ke Web GIS.
                 </p>
               </div>
             )}
@@ -400,6 +403,13 @@ function ProjectPanel({
                                 {layer.name}
                                 {isBoundary && (
                                   <span className="layer-note layer-note--boundary"> (Boundary)</span>
+                                )}
+                                {layer.source_format && layer.kind !== "raster" && onLayerCategoryFieldChange && (
+                                  <CategoryFieldPicker
+                                    projectPath={projectPath}
+                                    layer={layer}
+                                    onChange={(field) => onLayerCategoryFieldChange(index, field)}
+                                  />
                                 )}
                               </td>
                               <td onClick={(e) => e.stopPropagation()}>

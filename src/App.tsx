@@ -18,6 +18,8 @@ import ConfigurationPanel, {
 import ExportPanel from "./components/ExportPanel";
 import AttributeTablePanel from "./components/AttributeTablePanel";
 import FeatureInfoCard from "./components/FeatureInfoCard";
+import { getCachedGeojson } from "./lib/layerGeojsonCache";
+import { buildCategories } from "./lib/autoCategories";
 
 type MenuKey = "project" | "configuration" | "export";
 
@@ -253,6 +255,25 @@ function App() {
     setActiveLayerIndex(null);
   }
 
+  function handleLayerCategoryFieldChange(index: number, field: string | null) {
+    const target = layers[index];
+    if (!target) return;
+    const text = projectPath ? getCachedGeojson(projectPath, target.datasource) : null;
+    const categories = field ? buildCategories(text, field) : null;
+    setLayers((prev) =>
+      prev.map((l, i) =>
+        i === index
+          ? { ...l, category_field: categories ? field : null, categories }
+          : l
+      )
+    );
+    setLayerCategoryColors((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  }
+
   function handleLayerColorChange(index: number, color: string) {
     setLayerColors((prev) => ({ ...prev, [index]: color }));
   }
@@ -445,6 +466,7 @@ function App() {
                   onResetAllLayers={handleResetAllLayers}
                   layerOrder={layerOrder}
                   onLayerOrderChange={handleLayerOrderChange}
+                  onLayerCategoryFieldChange={handleLayerCategoryFieldChange}
                   activeLayerIndex={activeLayerIndex}
                   onFocusLayer={setActiveLayerIndex}
                 />
