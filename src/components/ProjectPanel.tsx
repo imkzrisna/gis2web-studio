@@ -19,15 +19,36 @@ export interface LabelingInfo {
   group_by_field: string | null;
 }
 
+export interface RasterMeta {
+  width: number;
+  height: number;
+  band_count: number;
+  data_type: string | null;
+  nodata: number | null;
+  has_color_table: boolean;
+  color_interpretation: string | null;
+  suggested_type: "rgb" | "rgba" | "single_band" | "multiband";
+}
+
 export interface LayerInfo {
   name: string;
-  geometry_type: "Point" | "Line" | "Polygon" | "NoGeometry" | "Unknown";
+  geometry_type: "Point" | "Line" | "Polygon" | "NoGeometry" | "Unknown" | "Raster";
   datasource: string;
   color: string | null;
   category_field: string | null;
   categories: CategoryInfo[] | null;
   ranges: GraduatedRangeInfo[] | null;
   labeling: LabelingInfo | null;
+  // Opsional agar layer dari import QGIS (vektor) tetap kompatibel.
+  // Nilai tidak ada = "vector".
+  kind?: "vector" | "raster";
+  crs?: string | null;
+  raster?: RasterMeta | null;
+  source_format?: string;
+}
+
+export function isRasterLayer(layer: LayerInfo | undefined | null): boolean {
+  return layer?.kind === "raster";
 }
 
 interface ProjectPanelProps {
