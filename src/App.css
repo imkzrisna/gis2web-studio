@@ -2440,3 +2440,16 @@ button {
 .layer-reset-all-btn:hover {
   background: #fafafa;
 }
+
+/* Search layer */
+.layer-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.85rem;
+}

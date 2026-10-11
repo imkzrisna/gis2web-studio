@@ -95,6 +95,7 @@ function ProjectPanel({
   // visibilitasnya diatur lewat CSS (prop `visible`), bukan unmount/mount.
   const [lastPreviewIndex, setLastPreviewIndex] = useState<number | null>(null);
   const [expandedLayerIndex, setExpandedLayerIndex] = useState<number | null>(null);
+  const [layerSearch, setLayerSearch] = useState("");
   const hoverTimeoutRef = useRef<number | null>(null);
 
   function toggleLayerSelected(index: number) {
@@ -232,6 +233,17 @@ function ProjectPanel({
                       Centang layer yang ingin dipublikasikan, lalu tandai salah satu
                       sebagai Boundary Layer (khusus layer polygon).
                     </p>
+                    <input
+                      type="search"
+                      className="layer-search-input"
+                      placeholder="Cari nama layer..."
+                      value={layerSearch}
+                      onChange={(e) => setLayerSearch(e.target.value)}
+                    />
+                    {layerSearch.trim() !== "" &&
+                      !layers.some((l) =>
+                        l.name.toLowerCase().includes(layerSearch.trim().toLowerCase())
+                      ) && <p className="layer-note">Tidak ada layer yang cocok.</p>}
                     <table className="layer-table layer-table--select">
                       <thead>
                         <tr>
@@ -243,6 +255,12 @@ function ProjectPanel({
                       </thead>
                       <tbody>
                         {layers.map((layer, index) => {
+                          if (
+                            layerSearch.trim() !== "" &&
+                            !layer.name.toLowerCase().includes(layerSearch.trim().toLowerCase())
+                          ) {
+                            return null;
+                          }
                           const isPolygon = layer.geometry_type === "Polygon";
                           const isActive = activeLayerIndex === index;
                           return (
