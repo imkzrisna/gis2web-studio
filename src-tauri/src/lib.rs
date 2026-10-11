@@ -963,6 +963,436 @@ fn inspect_shapefiles(paths: Vec<String>) -> Result<Vec<LayerInfo>, String> {
     Ok(layers)
 }
 
+const SCAN_MAX_DEPTH: usize = 3;
+const SCAN_MAX_DATASETS: usize = 300;
+
+#[derive(Serialize, Clone, Debug)]
+struct RasterMeta {
+    width: u64,
+    height: u64,
+    band_count: usize,
+    data_type: Option<String>,
+    nodata: Option<f64>,
+    has_color_table: bool,
+    color_interpretation: Option<String>,
+    suggested_type: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+struct ScannedDataset {
+    name: String,
+    kind: String,
+    format: String,
+    path: String,
+    relative_path: String,
+    layer_name: Option<String>,
+    geometry_type: Option<String>,
+    crs: Option<String>,
+    status: String,
+    messages: Vec<String>,
+    companion_files: Vec<String>,
+    raster: Option<RasterMeta>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+struct FolderScanResult {
+    folder: String,
+    datasets: Vec<ScannedDataset>,
+    truncated: bool,
+}
+
+fn extract_epsg_from_wkt(wkt: &str) -> Option<String> {
+    let marker = "ID[\"EPSG\",";
+    let pos = wkt.rfind(marker)?;
+    let rest = &wkt[pos + marker.len()..];
+    let end = rest.find(']')?;
+    Some(format!("EPSG:{}", rest[..end].trim()))
+}
+
+fn describe_crs(wkt: &str) -> Option<String> {
+    let trimmed = wkt.trim();
+    if trimmed.is_empty() || trimmed.starts_with("(unknown)") {
+        return None;
+    }
+    Some(extract_epsg_from_wkt(trimmed).unwrap_or_else(|| "CRS kustom (tanpa kode EPSG)".to_string()))
+}
+
+fn parse_ogrinfo_layers(info: &str) -> Vec<(String, String, Option<String>)> {
+    let mut out = Vec::new();
+    for chunk in info.split("Layer name: ").skip(1) {
+        let name = chunk.lines().next().unwrap_or("").trim().to_string();
+        let geometry = chunk
+            .lines()
+            .find_map(|l| l.trim().strip_prefix("Geometry:").map(|v| v.trim().to_string()))
+            .unwrap_or_default();
+        let crs = chunk.split("Layer SRS WKT:").nth(1).and_then(describe_crs);
+        out.push((name, geometry, crs));
+    }
+    out
+}
+
+fn collect_companions(path: &Path, exts: &[&str], suffixes: &[&str]) -> Vec<String> {
+    let mut found = Vec::new();
+    for ext in exts {
+        for cand in [path.with_extension(ext), path.with_extension(ext.to_uppercase())] {
+            if cand.exists() {
+                if let Some(n) = cand.file_name().and_then(|n| n.to_str()) {
+                    if !found.contains(&n.to_string()) {
+                        found.push(n.to_string());
+                    }
+                }
+                break;
+            }
+        }
+    }
+    if let Some(full) = path.file_name().and_then(|n| n.to_str()) {
+        for suffix in suffixes {
+            let cand = path.with_file_name(format!("{full}{suffix}"));
+            if cand.exists() {
+                found.push(format!("{full}{suffix}"));
+            }
+        }
+    }
+    found
+}
+
+fn scan_vector_dataset(
+    path: &Path,
+    rel: &str,
+    format: &str,
+    base_messages: Vec<String>,
+    base_status: &str,
+    companions: Vec<String>,
+) -> Vec<ScannedDataset> {
+    let path_str = path.to_string_lossy().to_string();
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("layer")
+        .to_string();
+
+    let make = |name: String,
+                layer_name: Option<String>,
+                geometry: Option<String>,
+                crs: Option<String>,
+                status: &str,
+                messages: Vec<String>| ScannedDataset {
+        name,
+        kind: "vector".to_string(),
+        format: format.to_string(),
+        path: path_str.clone(),
+        relative_path: rel.to_string(),
+        layer_name,
+        geometry_type: geometry,
+        crs,
+        status: status.to_string(),
+        messages,
+        companion_files: companions.clone(),
+        raster: None,
+    };
+
+    let info = match run_ogrinfo(&path_str) {
+        Ok(i) => i,
+        Err(e) => {
+            let reason = e.lines().next().unwrap_or("alasan tidak diketahui").trim().to_string();
+            return vec![make(
+                stem,
+                None,
+                None,
+                None,
+                "error",
+                vec![format!("Tidak dapat dibaca oleh OGR: {reason}")],
+            )];
+        }
+    };
+
+    let layers = parse_ogrinfo_layers(&info);
+    if layers.is_empty() {
+        return vec![make(
+            stem,
+            None,
+            None,
+            None,
+            "error",
+            vec!["Tidak ada layer yang ditemukan di dalam file.".to_string()],
+        )];
+    }
+
+    layers
+        .into_iter()
+        .map(|(lname, geom_raw, crs)| {
+            let geometry = normalize_geometry_type(&geom_raw);
+            let mut messages = base_messages.clone();
+            let mut status = base_status.to_string();
+            if geometry == "NoGeometry" || geom_raw.trim().eq_ignore_ascii_case("none") {
+                status = "warning".to_string();
+                messages.push("Tabel tanpa geometri; tidak dapat ditampilkan di peta.".to_string());
+            }
+            if crs.is_none() && base_messages.is_empty() {
+                status = "warning".to_string();
+                messages.push("CRS tidak diketahui; lokasi data tidak dapat dipastikan.".to_string());
+            }
+            let name = if format == "geopackage" { lname.clone() } else { stem.clone() };
+            make(name, Some(lname), Some(geometry), crs, &status, messages)
+        })
+        .collect()
+}
+
+fn scan_raster_dataset(
+    gdalinfo_bin: Option<&str>,
+    path: &Path,
+    rel: &str,
+    companions: Vec<String>,
+) -> ScannedDataset {
+    let path_str = path.to_string_lossy().to_string();
+    let name = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("raster")
+        .to_string();
+
+    let mut ds = ScannedDataset {
+        name,
+        kind: "raster".to_string(),
+        format: "geotiff".to_string(),
+        path: path_str.clone(),
+        relative_path: rel.to_string(),
+        layer_name: None,
+        geometry_type: None,
+        crs: None,
+        status: "error".to_string(),
+        messages: Vec::new(),
+        companion_files: companions,
+        raster: None,
+    };
+
+    let Some(bin) = gdalinfo_bin else {
+        ds.messages
+            .push("GDAL (gdalinfo) tidak ditemukan; raster tidak dapat diperiksa.".to_string());
+        return ds;
+    };
+
+    let output = match gdal_command(bin).arg("-json").arg(&path_str).output() {
+        Ok(o) => o,
+        Err(e) => {
+            ds.messages.push(format!("Gagal menjalankan gdalinfo: {e}"));
+            return ds;
+        }
+    };
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let reason = stderr.lines().next().unwrap_or("alasan tidak diketahui").trim().to_string();
+        ds.messages.push(format!("Tidak dapat dibaca oleh GDAL: {reason}"));
+        return ds;
+    }
+    let v: serde_json::Value = match serde_json::from_slice(&output.stdout) {
+        Ok(v) => v,
+        Err(e) => {
+            ds.messages.push(format!("Output gdalinfo tidak valid: {e}"));
+            return ds;
+        }
+    };
+
+    let width = v["size"][0].as_u64().unwrap_or(0);
+    let height = v["size"][1].as_u64().unwrap_or(0);
+    let bands = v["bands"].as_array().cloned().unwrap_or_default();
+    let band_count = bands.len();
+    let first = bands.first();
+    let data_type = first.and_then(|b| b["type"].as_str()).map(|s| s.to_string());
+    let nodata = first.and_then(|b| b["noDataValue"].as_f64());
+    let has_color_table = first.map(|b| !b["colorTable"].is_null()).unwrap_or(false);
+    let color_interpretation = first
+        .and_then(|b| b["colorInterpretation"].as_str())
+        .map(|s| s.to_string());
+    let is_byte = data_type.as_deref() == Some("Byte");
+    let suggested_type = if band_count >= 4 && is_byte {
+        "rgba"
+    } else if band_count == 3 && is_byte {
+        "rgb"
+    } else if band_count == 1 {
+        "single_band"
+    } else {
+        "multiband"
+    }
+    .to_string();
+
+    ds.crs = v["coordinateSystem"]["wkt"].as_str().and_then(describe_crs);
+
+    if band_count == 0 || width == 0 || height == 0 {
+        ds.messages.push("Raster tidak memiliki band atau ukuran piksel yang valid.".to_string());
+        return ds;
+    }
+
+    ds.status = "ok".to_string();
+    if ds.crs.is_none() {
+        ds.status = "warning".to_string();
+        ds.messages.push(
+            "CRS tidak diketahui; raster tidak dapat ditempatkan di peta sebelum CRS ditentukan."
+                .to_string(),
+        );
+    }
+    if suggested_type == "single_band" && !has_color_table {
+        ds.messages.push(
+            "Raster satu band tanpa color table internal; warna kelas atau color ramp perlu diatur."
+                .to_string(),
+        );
+    }
+
+    ds.raster = Some(RasterMeta {
+        width,
+        height,
+        band_count,
+        data_type,
+        nodata,
+        has_color_table,
+        color_interpretation,
+        suggested_type,
+    });
+    ds
+}
+
+fn scan_gis_folder_blocking(folder: &str) -> Result<FolderScanResult, String> {
+    let root = Path::new(folder);
+    if !root.is_dir() {
+        return Err(format!("Folder tidak ditemukan: {folder}"));
+    }
+
+    let gdalinfo = resolve_gdal_bin("gdalinfo");
+    let mut datasets: Vec<ScannedDataset> = Vec::new();
+    let mut truncated = false;
+
+    let walker = WalkDir::new(root)
+        .max_depth(SCAN_MAX_DEPTH)
+        .sort_by_file_name()
+        .into_iter()
+        .filter_entry(|e| {
+            if e.depth() == 0 {
+                return true;
+            }
+            match e.file_name().to_str() {
+                Some(n) => !n.starts_with('.') && n != "__MACOSX",
+                None => false,
+            }
+        });
+
+    for entry in walker.filter_map(|e| e.ok()) {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        let path = entry.path();
+        let ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .unwrap_or_default();
+        if !["shp", "tif", "tiff", "geojson", "gpkg"].contains(&ext.as_str()) {
+            continue;
+        }
+        if datasets.len() >= SCAN_MAX_DATASETS {
+            truncated = true;
+            break;
+        }
+
+        let rel = path
+            .strip_prefix(root)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .to_string();
+
+        match ext.as_str() {
+            "shp" => {
+                let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("layer").to_string();
+                let companions = collect_companions(
+                    path,
+                    &["shx", "dbf", "prj", "cpg", "sbn", "sbx", "qix"],
+                    &[],
+                );
+                let missing_required: Vec<String> = ["shx", "dbf"]
+                    .iter()
+                    .filter(|e| !shapefile_companion_exists(path, e))
+                    .map(|e| format!("{stem}.{e}"))
+                    .collect();
+                if !missing_required.is_empty() {
+                    datasets.push(ScannedDataset {
+                        name: stem,
+                        kind: "vector".to_string(),
+                        format: "shapefile".to_string(),
+                        path: path.to_string_lossy().to_string(),
+                        relative_path: rel,
+                        layer_name: None,
+                        geometry_type: None,
+                        crs: None,
+                        status: "error".to_string(),
+                        messages: vec![format!(
+                            "Shapefile tidak lengkap. File pendamping wajib yang hilang: {}",
+                            missing_required.join(", ")
+                        )],
+                        companion_files: companions,
+                        raster: None,
+                    });
+                    continue;
+                }
+                let mut messages = Vec::new();
+                let mut status = "ok";
+                if !shapefile_companion_exists(path, "prj") {
+                    status = "warning";
+                    messages.push(format!(
+                        "File {stem}.prj tidak ada; CRS tidak diketahui sehingga lokasi data tidak dapat dipastikan."
+                    ));
+                }
+                datasets.extend(scan_vector_dataset(path, &rel, "shapefile", messages, status, companions));
+            }
+            "tif" | "tiff" => {
+                let companions = collect_companions(path, &["tfw", "wld", "prj"], &[".aux.xml", ".ovr"]);
+                datasets.push(scan_raster_dataset(gdalinfo.as_deref(), path, &rel, companions));
+            }
+            "geojson" => {
+                datasets.extend(scan_vector_dataset(path, &rel, "geojson", Vec::new(), "ok", Vec::new()));
+            }
+            "gpkg" => {
+                datasets.extend(scan_vector_dataset(path, &rel, "geopackage", Vec::new(), "ok", Vec::new()));
+            }
+            _ => {}
+        }
+    }
+
+    let mut used_names: Vec<String> = Vec::new();
+    for ds in datasets.iter_mut() {
+        let base = ds.name.clone();
+        let mut name = base.clone();
+        let mut counter = 2;
+        while used_names.contains(&name) {
+            name = format!("{base}_{counter}");
+            counter += 1;
+        }
+        used_names.push(name.clone());
+        ds.name = name;
+    }
+
+    Ok(FolderScanResult {
+        folder: folder.to_string(),
+        datasets,
+        truncated,
+    })
+}
+
+#[tauri::command]
+async fn scan_gis_folder(folder: String) -> Result<FolderScanResult, String> {
+    scan_gis_folder_blocking(&folder)
+}
+
+#[cfg(test)]
+mod scan_tests {
+    #[test]
+    fn scan_folder_from_env() {
+        let Ok(dir) = std::env::var("GIS2WEB_SCAN_DIR") else {
+            return;
+        };
+        let result = super::scan_gis_folder_blocking(&dir).expect("scan gagal");
+        println!("{}", serde_json::to_string_pretty(&result).unwrap());
+    }
+}
+
 #[tauri::command]
 fn get_layer_geojson(project_path: String, datasource: String) -> Result<String, String> {
     if datasource.trim().is_empty() {
@@ -2862,6 +3292,7 @@ pub fn run() {
             save_project_settings,
             generate_tile_pyramid,
             inspect_shapefiles,
+            scan_gis_folder,
             get_layer_geojson,
             export_web_gis
         ])
