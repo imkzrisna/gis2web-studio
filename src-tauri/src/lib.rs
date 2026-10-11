@@ -176,13 +176,37 @@ fn save_project_settings(project_path: String, json: String) -> Result<(), Strin
     std::fs::rename(&tmp, &path).map_err(|e| format!("Gagal menyimpan pengaturan project: {e}"))
 }
 
+const GDAL_BIN_DIRS: [&str; 3] = ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
+
+/// Cari executable GDAL/OGR: coba PATH dulu, lalu lokasi umum (Homebrew, MacPorts).
+/// Diperlukan karena app yang dibuka dari Finder tidak mewarisi PATH Terminal.
+fn resolve_gdal_bin(name: &str) -> Option<String> {
+    let mut candidates: Vec<String> = vec![name.to_string()];
+    for dir in GDAL_BIN_DIRS {
+        candidates.push(format!("{dir}/{name}"));
+    }
+    candidates.into_iter().find(|cand| {
+        Command::new(cand)
+            .arg("--version")
+            .output()
+            .map(|out| out.status.success())
+            .unwrap_or(false)
+    })
+}
+
+/// Command dengan PATH diperluas agar script (mis. gdal2tiles.py) menemukan
+/// interpreter dan modul GDAL saat app dibuka dari Finder.
+fn gdal_command(bin: &str) -> Command {
+    let mut cmd = Command::new(bin);
+    let current = std::env::var("PATH").unwrap_or_default();
+    let extra = GDAL_BIN_DIRS.join(":");
+    cmd.env("PATH", format!("{extra}:{current}"));
+    cmd
+}
+
 #[tauri::command]
 fn check_gdal_available() -> bool {
-    Command::new("gdal2tiles.py")
-        .arg("--version")
-        .output()
-        .map(|out| out.status.success())
-        .unwrap_or(false)
+    resolve_gdal_bin("gdal2tiles.py").is_some()
 }
 
 #[tauri::command]
@@ -203,7 +227,10 @@ fn generate_tile_pyramid(
 
     let zoom_arg = format!("{min_zoom}-{max_zoom}");
 
-    let output = Command::new("gdal2tiles.py")
+    let gdal2tiles_bin = resolve_gdal_bin("gdal2tiles.py").ok_or_else(|| {
+        "gdal2tiles.py tidak ditemukan. Pastikan GDAL terinstall (mis. brew install gdal).".to_string()
+    })?;
+    let output = gdal_command(&gdal2tiles_bin)
         .arg("-p")
         .arg("mercator")
         .arg("-z")
