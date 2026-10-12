@@ -1880,6 +1880,10 @@ struct ExportLayerInput {
     is_boundary: bool,
     #[serde(default)]
     is_focus: bool,
+    #[serde(default)]
+    kind: Option<String>,
+    #[serde(default)]
+    raster_categorical: bool,
     show_attribute_table: bool,
 }
 
@@ -2504,6 +2508,7 @@ fn build_style_css() -> String {
   border-radius: 1px;
 }
 
+.raster-pixelated { image-rendering: pixelated; }
 .legend-swatch--boundary {
   background: transparent;
   border-width: 2px;
@@ -3226,7 +3231,7 @@ function makeLegendSwatch(layerCfg, color) {{
 function buildLegendEntries(layerCfg) {{
   if (layerCfg.isBoundary) return null;
   let entries = null;
-  if (layerCfg.categoryField && layerCfg.categories && layerCfg.categories.length > 0) {{
+  if ((layerCfg.categoryField || layerCfg.kind === 'raster') && layerCfg.categories && layerCfg.categories.length > 0) {{
     entries = layerCfg.categories.map((c) => ({{ label: c.value === 'NULL' ? '(kosong)' : c.value, color: c.color }}));
   }} else if (layerCfg.categoryField && layerCfg.ranges && layerCfg.ranges.length > 0) {{
     entries = layerCfg.ranges.map((r) => ({{ label: r.label, color: r.color }}));
@@ -3337,7 +3342,32 @@ function computeLabeledFeatureIndexes(layer, geojson) {{
   return result;
 }}
 
+function loadRasterLayer(layer) {{
+  if (!map.getPane('rasterPane')) {{ map.createPane('rasterPane').style.zIndex = '250'; }}
+  const rb = layer.rasterBounds;
+  const bounds = L.latLngBounds([rb[0], rb[1]], [rb[2], rb[3]]);
+  const tl = L.tileLayer(layer.tileUrl, {{
+    pane: 'rasterPane',
+    bounds: bounds,
+    minNativeZoom: layer.minNativeZoom,
+    maxNativeZoom: layer.maxNativeZoom,
+    minZoom: CONFIG.minZoom,
+    maxZoom: CONFIG.maxZoom,
+    opacity: layer.opacity == null ? 1 : layer.opacity,
+    className: layer.pixelated ? 'raster-pixelated' : '',
+  }}).addTo(map);
+  layerRefs[layer.layerIndex] = tl;
+  if (layer.isFocus) {{
+    map.fitBounds(bounds);
+    boundaryFitted = true;
+  }} else if (!boundaryFitted) {{
+    map.fitBounds(bounds);
+  }}
+  return Promise.resolve();
+}}
+
 function loadLayer(layer) {{
+  if (layer.kind === 'raster') return loadRasterLayer(layer);
   return fetch(layer.file)
     .then((res) => res.json())
     .then((geojson) => {{
@@ -3459,6 +3489,63 @@ fn export_web_gis(
             counter += 1;
         }
         used_slugs.push(slug.clone());
+
+        if layer.kind.as_deref() == Some("raster") {
+            let colors: Vec<RasterClassColor> = layer
+                .categories
+                .as_ref()
+                .map(|cats| {
+                    cats.iter()
+                        .filter_map(|c| {
+                            c.value
+                                .parse::<f64>()
+                                .ok()
+                                .map(|v| RasterClassColor { value: v, color: c.color.clone() })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            let tiles = prepare_raster_tiles_blocking(
+                &layer.datasource,
+                &output_dir,
+                &slug,
+                config.min_zoom,
+                config.max_zoom,
+                layer.raster_categorical,
+                &colors,
+            )
+            .map_err(|e| format!("Raster \"{}\": {e}", layer.name))?;
+            let cats_json = layer.categories.as_ref().map(|cats| {
+                cats.iter()
+                    .map(|c| serde_json::json!({ "value": c.value, "color": c.color }))
+                    .collect::<Vec<_>>()
+            });
+            layer_entries.push(serde_json::json!({
+                "layerIndex": layer.layer_index,
+                "kind": "raster",
+                "file": serde_json::Value::Null,
+                "name": layer.name,
+                "geometryType": "Raster",
+                "color": layer.color,
+                "opacity": layer.opacity,
+                "pointSize": 5,
+                "categoryField": serde_json::Value::Null,
+                "categories": cats_json,
+                "ranges": serde_json::Value::Null,
+                "labeling": serde_json::Value::Null,
+                "visibleFields": serde_json::Value::Null,
+                "fieldAliases": serde_json::Value::Null,
+                "isBoundary": false,
+                "isFocus": layer.is_focus,
+                "showAttributeTable": false,
+                "tileUrl": tiles.tile_url_template,
+                "rasterBounds": [tiles.south, tiles.west, tiles.north, tiles.east],
+                "minNativeZoom": tiles.min_zoom,
+                "maxNativeZoom": tiles.max_zoom,
+                "pixelated": layer.raster_categorical,
+            }));
+            continue;
+        }
 
         let file_name = format!("{slug}.geojson");
         let geojson_content = get_layer_geojson(project_path.clone(), layer.datasource.clone())?;

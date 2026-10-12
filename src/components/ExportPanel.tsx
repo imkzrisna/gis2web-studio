@@ -70,6 +70,8 @@ interface ExportLayerInput {
   field_aliases: Record<string, string> | null;
   is_boundary: boolean;
   is_focus: boolean;
+  kind: string;
+  raster_categorical: boolean;
   show_attribute_table: boolean;
 }
 
@@ -171,7 +173,7 @@ function ExportPanel({
       .map((index) => ({ index, layer: layers[index] }))
       .filter(
         (entry): entry is { index: number; layer: LayerInfo } =>
-          Boolean(entry.layer) && entry.layer.kind !== "raster"
+          Boolean(entry.layer)
       )
       .map(({ index, layer }) => {
         const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
@@ -202,7 +204,7 @@ function ExportPanel({
           datasource: layer.datasource,
           geometry_type: layer.geometry_type,
           color: layerColors[index] ?? (isBoundary ? "#f97316" : "#2563eb"),
-          opacity: layerOpacities[index] ?? 0.35,
+          opacity: layerOpacities[index] ?? (layer.kind === "raster" ? 1 : 0.35),
           point_size: layerPointSizes[index] ?? 5,
           category_field: layer.category_field,
           categories,
@@ -212,6 +214,8 @@ function ExportPanel({
           field_aliases: layerFieldAliases[index] ?? null,
           is_boundary: isBoundary,
           is_focus: index === boundaryLayerIndex,
+          kind: layer.kind ?? "vector",
+          raster_categorical: (layer.categories?.length ?? 0) > 0 || !!layer.raster?.has_color_table,
           show_attribute_table: !isBoundary,
         };
       });

@@ -66,7 +66,7 @@ export default function ExportPreviewLegend({
             const kind = isBoundary ? "boundary" : legendKind(layer.geometry_type);
 
             let entries: { label: string; color: string }[] | null = null;
-            if (!isBoundary && layer.category_field && layer.categories && layer.categories.length > 0) {
+            if (!isBoundary && (layer.category_field || layer.kind === "raster") && layer.categories && layer.categories.length > 0) {
               entries = layer.categories.map((c) => ({
                 label: c.value === "NULL" ? "(kosong)" : c.value,
                 color: overrides?.[c.value] ?? c.color,

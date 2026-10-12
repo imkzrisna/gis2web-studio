@@ -7,6 +7,7 @@ import { scaleBarGradient, createFixedScaleControl } from "../lib/scaleBar";
 import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, ExportConfig } from "./ConfigurationPanel";
 import { getCachedGeojson } from "../lib/layerGeojsonCache";
+import { prepareRasterPreview, rasterClassColors, rasterTileUrl } from "../lib/rasterTiles";
 import { styleForLayer, isClassifiedLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getPreviewHighlightStyle, getStrongHighlightStyle } from "../lib/layerStyle";
 import { getFeatureCandidates } from "../lib/featureHitTest";
 
@@ -102,6 +103,7 @@ function ExportPreviewMap({
     if (!map || !projectPath) return;
 
     map.eachLayer((l) => {
+      if (l instanceof L.TileLayer && (l.options as L.TileLayerOptions).pane === "rasterPane") return;
       if (l instanceof L.TileLayer || l instanceof L.GeoJSON) map.removeLayer(l);
     });
 
@@ -240,6 +242,86 @@ function ExportPreviewMap({
     exportConfig.labelFontSize,
     layerVisibleFields,
   ]);
+
+  // ---- Raster overlay: pane di atas basemap (200) dan di bawah vektor (400).
+  const rasterTileRefs = useRef<Map<number, L.TileLayer>>(new Map());
+  const rasterKeyRef = useRef<Map<number, string>>(new Map());
+  const opacityRef = useRef(layerOpacities);
+  opacityRef.current = layerOpacities;
+  const orderRef = useRef(layerOrder);
+  orderRef.current = layerOrder;
+
+  function applyRasterZ() {
+    rasterTileRefs.current.forEach((tl, idx) => {
+      const pos = orderRef.current.indexOf(idx);
+      tl.setZIndex(100 - (pos < 0 ? 99 : pos));
+    });
+  }
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !projectPath) return;
+    if (!map.getPane("rasterPane")) map.createPane("rasterPane").style.zIndex = "250";
+    const wanted = selectedLayerIndexes.filter((i) => layers[i]?.kind === "raster");
+    rasterTileRefs.current.forEach((tl, idx) => {
+      if (!wanted.includes(idx)) {
+        map.removeLayer(tl);
+        rasterTileRefs.current.delete(idx);
+        rasterKeyRef.current.delete(idx);
+      }
+    });
+    if (wanted.length === 0) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      for (const idx of wanted) {
+        const layer = layers[idx];
+        if (!layer) continue;
+        const colors = rasterClassColors(layer, layerCategoryColors[idx]);
+        const key = `${layer.datasource}|${colors.map((c) => `${c.value}:${c.color}`).join(",")}`;
+        if (rasterKeyRef.current.get(idx) === key && rasterTileRefs.current.has(idx)) continue;
+        try {
+          const result = await prepareRasterPreview(layer, colors);
+          if (cancelled) return;
+          const categorical = colors.length > 0 || !!layer.raster?.has_color_table;
+          const bounds = L.latLngBounds([result.south, result.west], [result.north, result.east]);
+          const tl = L.tileLayer(rasterTileUrl(result), {
+            pane: "rasterPane",
+            bounds,
+            minNativeZoom: result.min_zoom,
+            maxNativeZoom: result.max_zoom,
+            minZoom: 0,
+            maxZoom: 22,
+            opacity: opacityRef.current[idx] ?? 1,
+            className: categorical ? "raster-pixelated" : "",
+          });
+          const old = rasterTileRefs.current.get(idx);
+          tl.addTo(map);
+          if (old) map.removeLayer(old);
+          rasterTileRefs.current.set(idx, tl);
+          rasterKeyRef.current.set(idx, key);
+          if (!old && geojsonRef.current.size === 0) map.fitBounds(bounds, { padding: [16, 16] });
+        } catch (err) {
+          console.error("Raster preview gagal:", layer.name, err);
+        }
+      }
+      if (!cancelled) applyRasterZ();
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectPath, layers, selectedLayerIndexes, layerCategoryColors]);
+
+  useEffect(() => {
+    rasterTileRefs.current.forEach((tl, idx) => tl.setOpacity(layerOpacities[idx] ?? 1));
+  }, [layerOpacities]);
+
+  useEffect(() => {
+    applyRasterZ();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layerOrder]);
 
   // Smart hover + klik + click-cycle: memakai hit-test yang sama dengan Map utama.
   useEffect(() => {
