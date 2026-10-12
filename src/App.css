@@ -2546,3 +2546,6 @@ button {
 .import-warning { color: #b45309; font-size: 13px; margin: 0 0 10px; }
 .import-empty { font-size: 13px; opacity: 0.75; padding: 24px 0; }
 @media (max-width: 640px) { .import-cards { grid-template-columns: 1fr; } }
+
+/* Raster kategorikal: jangan dihaluskan saat diperbesar melewati zoom native. */
+.raster-pixelated { image-rendering: pixelated; }

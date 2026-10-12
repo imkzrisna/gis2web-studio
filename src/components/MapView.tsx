@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fetchLayerGeojson } from "../lib/layerGeojsonCache";
+import { prepareRasterPreview, rasterClassColors, rasterTileUrl } from "../lib/rasterTiles";
 import { styleForLayer, isClassifiedLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getStrongHighlightStyle, getSubtleHighlightStyle, getPreviewHighlightStyle } from "../lib/layerStyle";
 import { getFeatureCandidates } from "../lib/featureHitTest";
 import type { LayerInfo } from "./ProjectPanel";
@@ -550,7 +551,7 @@ function MapView({
 
       for (const index of indexesToLoad) {
         const layer = layers[index];
-        if (!layer) continue;
+        if (!layer || layer.kind === "raster") continue;
 
         try {
           const geojsonText = await fetchLayerGeojson(activeProjectPath, layer.datasource);
@@ -914,16 +915,104 @@ function MapView({
     };
   }, [activeFeature]);
 
+  // ---- Raster overlay: pane khusus di atas basemap (tilePane 200) dan di bawah
+  // vektor (overlayPane 400). Tidak ada maxBounds, jadi peta tetap bebas di-pan.
+  const rasterTileRefs = useRef<Map<number, L.TileLayer>>(new Map());
+  const rasterKeyRef = useRef<Map<number, string>>(new Map());
+  const layerOpacitiesRef = useRef(layerOpacities);
+  layerOpacitiesRef.current = layerOpacities;
+  const [rasterErrors, setRasterErrors] = useState<string[]>([]);
+
+  function applyRasterZ(order: number[]) {
+    rasterTileRefs.current.forEach((tl, idx) => {
+      const pos = order.indexOf(idx);
+      tl.setZIndex(100 - (pos < 0 ? 99 : pos));
+    });
+  }
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !projectPath) return;
+    if (!map.getPane("rasterPane")) {
+      map.createPane("rasterPane").style.zIndex = "250";
+    }
+    const wanted = selectedLayerIndexes.filter((i) => layers[i]?.kind === "raster");
+    rasterTileRefs.current.forEach((tl, idx) => {
+      if (!wanted.includes(idx)) {
+        map.removeLayer(tl);
+        rasterTileRefs.current.delete(idx);
+        rasterKeyRef.current.delete(idx);
+      }
+    });
+    if (wanted.length === 0) {
+      setRasterErrors([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const errors: string[] = [];
+      for (const idx of wanted) {
+        const layer = layers[idx];
+        if (!layer) continue;
+        const colors = rasterClassColors(layer, layerCategoryColors[idx]);
+        const key = `${layer.datasource}|${colors.map((c) => `${c.value}:${c.color}`).join(",")}`;
+        if (rasterKeyRef.current.get(idx) === key && rasterTileRefs.current.has(idx)) continue;
+        try {
+          const result = await prepareRasterPreview(layer, colors);
+          if (cancelled) return;
+          const categorical = colors.length > 0 || !!layer.raster?.has_color_table;
+          const tl = L.tileLayer(rasterTileUrl(result), {
+            pane: "rasterPane",
+            bounds: L.latLngBounds([result.south, result.west], [result.north, result.east]),
+            minNativeZoom: result.min_zoom,
+            maxNativeZoom: result.max_zoom,
+            minZoom: 0,
+            maxZoom: 22,
+            opacity: layerOpacitiesRef.current[idx] ?? 1,
+            className: categorical ? "raster-pixelated" : "",
+          });
+          const old = rasterTileRefs.current.get(idx);
+          tl.addTo(map);
+          if (old) map.removeLayer(old);
+          rasterTileRefs.current.set(idx, tl);
+          rasterKeyRef.current.set(idx, key);
+        } catch (err) {
+          errors.push(`${layer.name}: ${String(err)}`);
+        }
+      }
+      if (!cancelled) {
+        applyRasterZ(layerOrderRef.current);
+        setRasterErrors(errors);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectPath, layers, selectedLayerIndexes, layerCategoryColors]);
+
+  useEffect(() => {
+    rasterTileRefs.current.forEach((tl, idx) => tl.setOpacity(layerOpacities[idx] ?? 1));
+  }, [layerOpacities]);
+
+  useEffect(() => {
+    applyRasterZ(layerOrder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layerOrder]);
+
   return (
     <div className="map-view-wrapper">
       {isLoading && (
         <div className="map-status-banner">Memuat layer...</div>
       )}
-      {layerErrors.length > 0 && (
+      {[...layerErrors, ...rasterErrors].length > 0 && (
         <div className="map-error-banner">
           <strong>Beberapa layer gagal dimuat:</strong>
           <ul>
-            {layerErrors.map((err, i) => (
+            {[...layerErrors, ...rasterErrors].map((err, i) => (
               <li key={i}>{err}</li>
             ))}
           </ul>

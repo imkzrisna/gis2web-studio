@@ -398,7 +398,7 @@ function ProjectPanel({
                           const isPolygon = layer.geometry_type === "Polygon";
                           const isPointLayer = layer.geometry_type === "Point";
                           const color = layerColors[index] ?? "#2563eb";
-                          const opacity = layerOpacities[index] ?? (isPolygon ? 0.35 : 0.7);
+                          const opacity = layerOpacities[index] ?? (layer.kind === "raster" ? 1 : isPolygon ? 0.35 : 0.7);
                           const pointSize = layerPointSizes[index] ?? 5;
                           const isActive = activeLayerIndex === index;
                           const isBoundary = boundaryLayerIndex === index;
@@ -671,7 +671,7 @@ function ProjectPanel({
         </div>
       )}
 
-      {lastPreviewIndex !== null && projectPath && layers[lastPreviewIndex] && (
+      {lastPreviewIndex !== null && projectPath && layers[lastPreviewIndex] && layers[lastPreviewIndex].kind !== "raster" && (
         <LayerPreview
           projectPath={projectPath}
           datasource={layers[lastPreviewIndex].datasource}

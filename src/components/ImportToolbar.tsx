@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { LayerInfo } from "./ProjectPanel";
 import type { BasemapCandidateInfo } from "./ConfigurationPanel";
 import { clearLayerGeojsonCache, prefetchAllLayers } from "../lib/layerGeojsonCache";
+import { fetchRasterClassCategories } from "../lib/rasterTiles";
 import {
   datasetsToLayers,
   scanGisFolder,
@@ -39,7 +40,7 @@ const FORMAT_LABEL: Record<ScannedDataset["format"], string> = {
 };
 
 function isSelectable(d: ScannedDataset): boolean {
-  return d.status !== "error" && d.kind === "vector";
+  return d.status !== "error";
 }
 
 // Path virtual di dalam folder data. Backend memakai parent()-nya sebagai
@@ -210,7 +211,15 @@ function ImportToolbar({
     try {
       await checkGdal();
       setLabel(`Menyiapkan preview ${newLayers.length} layer...`);
-      await prefetchAllLayers(virtualPath, newLayers.map((l) => l.datasource));
+      for (const l of newLayers) {
+        if (l.kind === "raster" && l.raster && !l.raster.has_color_table && l.raster.suggested_type === "single_band") {
+          l.categories = await fetchRasterClassCategories(l.datasource);
+        }
+      }
+      await prefetchAllLayers(
+        virtualPath,
+        newLayers.filter((l) => l.kind !== "raster").map((l) => l.datasource)
+      );
 
       onLayersLoaded(newLayers);
       onSelectedLayerIndexesChange([]);
@@ -379,12 +388,6 @@ function ImportToolbar({
                                 {m}
                               </div>
                             ))}
-                            {isRaster && d.status !== "error" && (
-                              <div className="import-scan-msg">
-                                Dukungan raster sebagai overlay belum tersedia di versi ini; dataset ini belum
-                                dapat dimasukkan.
-                              </div>
-                            )}
                           </div>
                         </label>
                       );

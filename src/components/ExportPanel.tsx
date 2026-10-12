@@ -169,7 +169,10 @@ function ExportPanel({
 
     return indexesToExport
       .map((index) => ({ index, layer: layers[index] }))
-      .filter((entry): entry is { index: number; layer: LayerInfo } => Boolean(entry.layer))
+      .filter(
+        (entry): entry is { index: number; layer: LayerInfo } =>
+          Boolean(entry.layer) && entry.layer.kind !== "raster"
+      )
       .map(({ index, layer }) => {
         const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
         const categoryOverrides = layerCategoryColors[index];

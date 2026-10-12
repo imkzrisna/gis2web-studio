@@ -357,7 +357,8 @@ function App() {
     .map((_, i) => i)
     .filter(
       (i) =>
-        selectedLayerIndexes.includes(i)
+        selectedLayerIndexes.includes(i) &&
+        layers[i]?.kind !== "raster"
     );
 
   return (

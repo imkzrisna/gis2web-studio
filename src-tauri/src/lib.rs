@@ -1618,6 +1618,79 @@ mod raster_tests {
     }
 }
 
+#[derive(Serialize, Clone, Debug)]
+struct RasterClassValue {
+    value: i64,
+    count: u64,
+}
+
+fn raster_class_values_blocking(path: &str) -> Result<Vec<RasterClassValue>, String> {
+    let gdalinfo = resolve_gdal_bin("gdalinfo")
+        .ok_or_else(|| "gdalinfo tidak ditemukan. Pastikan GDAL terinstall.".to_string())?;
+    let out = gdal_command(&gdalinfo)
+        .arg("-json")
+        .arg("-hist")
+        .arg(path)
+        .output()
+        .map_err(|e| format!("Gagal menjalankan gdalinfo: {e}"))?;
+    if !out.status.success() {
+        return Err(format!("Raster tidak dapat dibaca: {}", String::from_utf8_lossy(&out.stderr).trim()));
+    }
+    let v: serde_json::Value =
+        serde_json::from_slice(&out.stdout).map_err(|e| format!("Output gdalinfo tidak valid: {e}"))?;
+    let band = v["bands"].get(0).ok_or("Raster tidak memiliki band.")?;
+
+    let dtype = band["type"].as_str().unwrap_or("");
+    if !(dtype == "Byte" || dtype.starts_with("Int") || dtype.starts_with("UInt")) {
+        return Err("Raster bukan bertipe bilangan bulat; tidak dapat didaftar sebagai kelas.".to_string());
+    }
+    let hist = &band["histogram"];
+    let buckets = hist["buckets"].as_array().ok_or("Histogram raster tidak tersedia.")?;
+    let hmin = hist["min"].as_f64().unwrap_or(0.0);
+    let hmax = hist["max"].as_f64().unwrap_or(0.0);
+    if buckets.is_empty() || hmax - hmin > 200.0 {
+        return Err("Rentang nilai raster terlalu lebar untuk dianggap raster kelas.".to_string());
+    }
+    let width = (hmax - hmin) / buckets.len() as f64;
+
+    let mut found: std::collections::BTreeMap<i64, u64> = std::collections::BTreeMap::new();
+    for (i, b) in buckets.iter().enumerate() {
+        let c = b.as_u64().unwrap_or(0);
+        if c == 0 {
+            continue;
+        }
+        let val = (hmin + (i as f64 + 0.5) * width).round() as i64;
+        *found.entry(val).or_insert(0) += c;
+    }
+    if found.is_empty() {
+        return Err("Raster tidak memiliki piksel bernilai valid.".to_string());
+    }
+    if found.len() > 50 {
+        return Err("Terlalu banyak nilai unik (lebih dari 50) untuk dianggap raster kelas.".to_string());
+    }
+    Ok(found.into_iter().map(|(value, count)| RasterClassValue { value, count }).collect())
+}
+
+#[tauri::command]
+async fn raster_class_values(raster_path: String) -> Result<Vec<RasterClassValue>, String> {
+    raster_class_values_blocking(&raster_path)
+}
+
+#[tauri::command]
+fn raster_preview_dir() -> String {
+    std::env::temp_dir().join("gis2web_raster_preview").to_string_lossy().to_string()
+}
+
+#[cfg(test)]
+mod class_tests {
+    #[test]
+    fn class_values_from_env() {
+        let Ok(tif) = std::env::var("GIS2WEB_RASTER_TIF") else { return };
+        let r = super::raster_class_values_blocking(&tif).expect("class values gagal");
+        println!("{}", serde_json::to_string_pretty(&r).unwrap());
+    }
+}
+
 #[tauri::command]
 fn get_layer_geojson(project_path: String, datasource: String) -> Result<String, String> {
     if datasource.trim().is_empty() {
@@ -3529,6 +3602,8 @@ pub fn run() {
             inspect_shapefiles,
             scan_gis_folder,
             prepare_raster_tiles,
+            raster_class_values,
+            raster_preview_dir,
             get_layer_geojson,
             export_web_gis
         ])
