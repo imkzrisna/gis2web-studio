@@ -326,11 +326,18 @@ function App() {
   function handleBoundaryLayerIndexChange(index: number | null) {
     setBoundaryLayerIndex(index);
     setActiveFeature((prev) => (prev && prev.layerIndex === index ? null : prev));
-    setLayerOrder((prev) => enforceBoundaryAtBack(prev, index));
+    setLayerOrder((prev) =>
+      enforceBoundaryAtBack(prev, index !== null && selectedLayerIndexes.includes(index) ? null : index)
+    );
   }
 
   function handleLayerOrderChange(newOrder: number[]) {
-    setLayerOrder(enforceBoundaryAtBack(newOrder, boundaryLayerIndex));
+    setLayerOrder(
+      enforceBoundaryAtBack(
+        newOrder,
+        boundaryLayerIndex !== null && selectedLayerIndexes.includes(boundaryLayerIndex) ? null : boundaryLayerIndex
+      )
+    );
   }
 
   function handleLayerOpacityChange(index: number, opacity: number) {
@@ -342,7 +349,7 @@ function App() {
   }
 
   function handleFocusFeature(layerIndex: number, featureIndex: number) {
-    if (layerIndex === boundaryLayerIndex) return;
+    if (layerIndex === boundaryLayerIndex && !selectedLayerIndexes.includes(layerIndex)) return;
     setActiveFeature({ layerIndex, featureIndex });
   }
 
@@ -350,7 +357,6 @@ function App() {
     .map((_, i) => i)
     .filter(
       (i) =>
-        boundaryLayerIndex !== i &&
         selectedLayerIndexes.includes(i)
     );
 

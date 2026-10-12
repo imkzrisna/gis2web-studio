@@ -55,6 +55,7 @@ function ExportPreviewMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const boundaryBoundsRef = useRef<L.LatLngBounds | null>(null);
+  const hiddenBoundaryRef = useRef<number | null>(null);
   const zoomRangeRef = useRef({ minZoom: exportConfig.minZoom, maxZoom: exportConfig.maxZoom });
   zoomRangeRef.current = { minZoom: exportConfig.minZoom, maxZoom: exportConfig.maxZoom };
   const featureLayersRef = useRef<Map<string, L.Layer>>(new Map());
@@ -119,6 +120,8 @@ function ExportPreviewMap({
 
     const allBounds: L.LatLngBounds[] = [];
     boundaryBoundsRef.current = null;
+    hiddenBoundaryRef.current =
+      boundaryLayerIndex !== null && !selectedLayerIndexes.includes(boundaryLayerIndex) ? boundaryLayerIndex : null;
     featureLayersRef.current.clear();
     geojsonRef.current.clear();
     styleRef.current.clear();
@@ -139,7 +142,7 @@ function ExportPreviewMap({
         continue;
       }
 
-      const isBoundary = index === boundaryLayerIndex;
+      const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
       const layerColor = layerColors[index] ?? (isBoundary ? "#f97316" : "#2563eb");
       const layerOpacity = layerOpacities[index] ?? 0.35;
       const categoryOverrides = layerCategoryColors[index];
@@ -216,7 +219,7 @@ function ExportPreviewMap({
 
       const b = geoLayer.getBounds();
       if (b.isValid()) allBounds.push(b);
-      if (isBoundary && b.isValid()) boundaryBoundsRef.current = b;
+      if (index === boundaryLayerIndex && b.isValid()) boundaryBoundsRef.current = b;
     }
 
     if (allBounds.length > 0) {
@@ -249,7 +252,7 @@ function ExportPreviewMap({
         latlng,
         layerOrder: ctxRef.current.layerOrder,
         layerIndexes: geojsonRef.current.keys(),
-        isLayerVisible: (i) => i !== boundaryLayerIndex,
+        isLayerVisible: (i) => i !== hiddenBoundaryRef.current,
         getGeojson: (i) => geojsonRef.current.get(i),
         getFeatureLayer: (k) => featureLayersRef.current.get(k),
       });
@@ -481,7 +484,7 @@ function ExportPreviewMap({
               (i, pos, arr) => !layerOrder.includes(i) && arr.indexOf(i) === pos
             ),
           ]}
-          boundaryLayerIndex={boundaryLayerIndex}
+          boundaryLayerIndex={boundaryLayerIndex !== null && !selectedLayerIndexes.includes(boundaryLayerIndex) ? boundaryLayerIndex : null}
           layerColors={layerColors}
           layerCategoryColors={layerCategoryColors}
           layerOpacities={layerOpacities}

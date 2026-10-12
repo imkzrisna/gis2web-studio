@@ -142,6 +142,8 @@ function MapView({
   const layerOrderRef = useRef<number[]>(layerOrder);
   const prevBoundaryLayerIndexRef = useRef<number | null>(null);
   const boundaryLayerIndexRef = useRef<number | null>(boundaryLayerIndex);
+  const selectedIdxRef = useRef<number[]>(selectedLayerIndexes);
+  selectedIdxRef.current = selectedLayerIndexes;
 
   useEffect(() => {
     boundaryLayerIndexRef.current = boundaryLayerIndex;
@@ -223,7 +225,7 @@ function MapView({
       layerOrder: layerOrderRef.current,
       layerIndexes: layerRefsRef.current.keys(),
       isLayerVisible: (idx) => {
-        if (idx === boundaryLayerIndexRef.current) return false;
+        if (idx === boundaryLayerIndexRef.current && !selectedIdxRef.current.includes(idx)) return false;
         const geoLayer = layerRefsRef.current.get(idx);
         return !!geoLayer && group.hasLayer(geoLayer);
       },
@@ -555,7 +557,7 @@ function MapView({
           const geojsonData = JSON.parse(geojsonText);
           layerGeojsonDataRef.current.set(index, geojsonData);
 
-          const isBoundary = index === boundaryLayerIndex;
+          const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
           const layerColor = layerColors[index] ?? (isBoundary ? "#f97316" : "#2563eb");
           const layerOpacity = layerOpacities[index] ?? 0.35;
           const categoryOverrides = layerCategoryColors[index];
@@ -650,7 +652,7 @@ function MapView({
           layerRefsRef.current.set(index, geoLayer);
           layerStyleRef.current.set(index, style);
 
-          if (isBoundary) {
+          if (index === boundaryLayerIndex) {
             boundaryGeoLayer = geoLayer;
           }
 
@@ -716,7 +718,7 @@ function MapView({
       const layer = layers[index];
       if (!layer) return;
 
-      const isBoundary = index === boundaryLayerIndex;
+      const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
       const layerColor = layerColors[index] ?? (isBoundary ? "#f97316" : "#2563eb");
       const layerOpacity = layerOpacities[index] ?? 0.35;
       const categoryOverrides = layerCategoryColors[index];
@@ -744,7 +746,7 @@ function MapView({
       const layer = layers[index];
       if (!layer) return;
 
-      const isBoundary = index === boundaryLayerIndex;
+      const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
       const layerColor = layerColors[index] ?? (isBoundary ? "#f97316" : "#2563eb");
       const layerOpacity = layerOpacities[index] ?? 0.35;
       const categoryOverrides = layerCategoryColors[index];

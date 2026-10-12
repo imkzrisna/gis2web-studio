@@ -624,7 +624,7 @@ function ProjectPanel({
                         .map(({ layerIdx, pos }, displayIndex) => {
                         const layer = layers[layerIdx];
                         if (!layer) return null;
-                        const isBoundary = layerIdx === boundaryLayerIndex;
+                        const isBoundary = layerIdx === boundaryLayerIndex && !selectedLayerIndexes.includes(layerIdx);
                         return (
                           <div
                             key={layerIdx}

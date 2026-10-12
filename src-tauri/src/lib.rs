@@ -1580,6 +1580,8 @@ struct ExportLayerInput {
     #[serde(default)]
     field_aliases: Option<std::collections::HashMap<String, String>>,
     is_boundary: bool,
+    #[serde(default)]
+    is_focus: bool,
     show_attribute_table: bool,
 }
 
@@ -2283,7 +2285,7 @@ const FocusBoundaryControl = L.Control.extend({{
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.on(button, 'click', function (ev) {{
       L.DomEvent.preventDefault(ev);
-      const boundaryCfg = CONFIG.layers.find(function (l) {{ return l.isBoundary; }});
+      const boundaryCfg = CONFIG.layers.find(function (l) {{ return l.isFocus; }});
       if (!boundaryCfg) return;
       const gLayer = layerRefs[boundaryCfg.layerIndex];
       if (!gLayer) return;
@@ -3100,7 +3102,7 @@ function loadLayer(layer) {{
 
       layerRefs[layer.layerIndex] = gLayer;
 
-      if (layer.isBoundary) {{
+      if (layer.isFocus) {{
         map.fitBounds(gLayer.getBounds());
         boundaryFitted = true;
       }} else if (!boundaryFitted) {{
@@ -3208,6 +3210,7 @@ fn export_web_gis(
             "visibleFields": layer.visible_fields,
             "fieldAliases": layer.field_aliases,
             "isBoundary": layer.is_boundary,
+            "isFocus": layer.is_focus || layer.is_boundary,
             "showAttributeTable": layer.show_attribute_table && !layer.is_boundary,
         }));
     }

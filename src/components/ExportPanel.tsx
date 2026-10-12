@@ -69,6 +69,7 @@ interface ExportLayerInput {
   visible_fields: string[] | null;
   field_aliases: Record<string, string> | null;
   is_boundary: boolean;
+  is_focus: boolean;
   show_attribute_table: boolean;
 }
 
@@ -170,7 +171,7 @@ function ExportPanel({
       .map((index) => ({ index, layer: layers[index] }))
       .filter((entry): entry is { index: number; layer: LayerInfo } => Boolean(entry.layer))
       .map(({ index, layer }) => {
-        const isBoundary = index === boundaryLayerIndex;
+        const isBoundary = index === boundaryLayerIndex && !selectedLayerIndexes.includes(index);
         const categoryOverrides = layerCategoryColors[index];
         const categories: ExportCategoryInput[] | null =
           layer.categories && layer.categories.length > 0
@@ -207,6 +208,7 @@ function ExportPanel({
           visible_fields: layerVisibleFields[index] ?? null,
           field_aliases: layerFieldAliases[index] ?? null,
           is_boundary: isBoundary,
+          is_focus: index === boundaryLayerIndex,
           show_attribute_table: !isBoundary,
         };
       });
