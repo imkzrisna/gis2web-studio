@@ -2549,3 +2549,23 @@ button {
 
 /* Raster kategorikal: jangan dihaluskan saat diperbesar melewati zoom native. */
 .raster-pixelated { image-rendering: pixelated; }
+
+/* ===== Panel Layers: tabel pengaturan tidak boleh melebihi lebar panel ===== */
+.layer-overlay-panel.expanded {
+  width: 460px;
+  max-width: calc(100vw - 2rem);
+}
+.layer-overlay-panel .layer-list {
+  min-width: 0;
+}
+.layer-overlay-panel .layer-table {
+  max-width: 100%;
+}
+.layer-overlay-panel .layer-table th,
+.layer-overlay-panel .layer-table td {
+  padding: 0.45rem 0.4rem;
+}
+.layer-overlay-panel .opacity-cell input[type="range"] {
+  width: 80px;
+  min-width: 0;
+}
