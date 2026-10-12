@@ -186,11 +186,16 @@ fn resolve_gdal_bin(name: &str) -> Option<String> {
         candidates.push(format!("{dir}/{name}"));
     }
     candidates.into_iter().find(|cand| {
-        Command::new(cand)
-            .arg("--version")
-            .output()
-            .map(|out| out.status.success())
-            .unwrap_or(false)
+        if cand.starts_with('/') {
+            // Path absolut: cukup cek file ada (beberapa tool, mis. gdaldem,
+            // tidak punya opsi --version).
+            Path::new(cand).is_file()
+        } else {
+            // Nama polos: cari di PATH proses (bisa jadi kosong saat dibuka dari Finder).
+            std::env::var_os("PATH")
+                .map(|p| std::env::split_paths(&p).any(|d| d.join(cand).is_file()))
+                .unwrap_or(false)
+        }
     })
 }
 
@@ -1390,6 +1395,209 @@ mod scan_tests {
         };
         let result = super::scan_gis_folder_blocking(&dir).expect("scan gagal");
         println!("{}", serde_json::to_string_pretty(&result).unwrap());
+    }
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct RasterClassColor {
+    value: f64,
+    color: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+struct RasterTilesResult {
+    tiles_dir: String,
+    tile_url_template: String,
+    south: f64,
+    west: f64,
+    north: f64,
+    east: f64,
+    min_zoom: u32,
+    max_zoom: u32,
+    tile_count: usize,
+}
+
+fn run_gdal_tool(tool: &str, args: &[String]) -> Result<(), String> {
+    let bin = resolve_gdal_bin(tool)
+        .ok_or_else(|| format!("{tool} tidak ditemukan. Pastikan GDAL terinstall (mis. brew install gdal)."))?;
+    let output = gdal_command(&bin)
+        .args(args)
+        .output()
+        .map_err(|e| format!("Gagal menjalankan {tool}: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("{tool} gagal: {}", stderr.trim()));
+    }
+    Ok(())
+}
+
+fn hex_to_rgb(hex: &str) -> Option<(u8, u8, u8)> {
+    let h = hex.trim().trim_start_matches('#');
+    if h.len() != 6 {
+        return None;
+    }
+    let n = u32::from_str_radix(h, 16).ok()?;
+    Some((((n >> 16) & 255) as u8, ((n >> 8) & 255) as u8, (n & 255) as u8))
+}
+
+fn prepare_raster_tiles_blocking(
+    raster_path: &str,
+    out_dir: &str,
+    slug: &str,
+    min_zoom: u32,
+    max_zoom: u32,
+    categorical: bool,
+    colors: &[RasterClassColor],
+) -> Result<RasterTilesResult, String> {
+    if !Path::new(raster_path).exists() {
+        return Err(format!("File raster tidak ditemukan: {raster_path}"));
+    }
+    if min_zoom > max_zoom || max_zoom > 24 {
+        return Err("Rentang zoom tidak valid.".to_string());
+    }
+
+    let gdalinfo = resolve_gdal_bin("gdalinfo")
+        .ok_or_else(|| "gdalinfo tidak ditemukan. Pastikan GDAL terinstall.".to_string())?;
+    let out = gdal_command(&gdalinfo)
+        .arg("-json")
+        .arg(raster_path)
+        .output()
+        .map_err(|e| format!("Gagal menjalankan gdalinfo: {e}"))?;
+    if !out.status.success() {
+        return Err(format!("Raster tidak dapat dibaca: {}", String::from_utf8_lossy(&out.stderr).trim()));
+    }
+    let info: serde_json::Value =
+        serde_json::from_slice(&out.stdout).map_err(|e| format!("Output gdalinfo tidak valid: {e}"))?;
+
+    if info["coordinateSystem"]["wkt"].as_str().map(|s| s.trim().is_empty()).unwrap_or(true) {
+        return Err("CRS raster tidak diketahui. Tentukan CRS raster sebelum menampilkannya di peta.".to_string());
+    }
+
+    let bands = info["bands"].as_array().cloned().unwrap_or_default();
+    let band_count = bands.len();
+    let first = bands.first().ok_or("Raster tidak memiliki band.")?;
+    let is_byte = first["type"].as_str() == Some("Byte");
+    let has_color_table = !first["colorTable"].is_null();
+
+    let ring = info["wgs84Extent"]["coordinates"][0]
+        .as_array()
+        .ok_or("Extent WGS84 raster tidak tersedia.")?;
+    let (mut west, mut south, mut east, mut north) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
+    for p in ring {
+        let (x, y) = (p[0].as_f64().unwrap_or(0.0), p[1].as_f64().unwrap_or(0.0));
+        west = west.min(x);
+        east = east.max(x);
+        south = south.min(y);
+        north = north.max(y);
+    }
+
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+    let work = std::env::temp_dir().join(format!("gis2web_raster_{nanos}"));
+    std::fs::create_dir_all(&work).map_err(|e| format!("Gagal membuat folder kerja: {e}"))?;
+
+    let result = (|| -> Result<RasterTilesResult, String> {
+        let staged: String;
+        let mut add_alpha = false;
+        if band_count == 1 {
+            let rgba = work.join("styled.tif").to_string_lossy().to_string();
+            if !colors.is_empty() {
+                let mut txt = String::new();
+                for c in colors {
+                    let (r, g, b) = hex_to_rgb(&c.color)
+                        .ok_or_else(|| format!("Warna kelas tidak valid: {}", c.color))?;
+                    txt.push_str(&format!("{} {} {} {} 255\n", c.value, r, g, b));
+                }
+                txt.push_str("nv 0 0 0 0\n");
+                let ctxt = work.join("colors.txt");
+                std::fs::write(&ctxt, txt).map_err(|e| format!("Gagal menulis file warna: {e}"))?;
+                run_gdal_tool("gdaldem", &[
+                    "color-relief".into(), raster_path.into(), ctxt.to_string_lossy().to_string(),
+                    rgba.clone(), "-alpha".into(), "-nearest_color_entry".into(),
+                ])?;
+            } else if has_color_table {
+                run_gdal_tool("gdal_translate", &[
+                    "-of".into(), "GTiff".into(), "-expand".into(), "rgba".into(),
+                    raster_path.into(), rgba.clone(),
+                ])?;
+            } else {
+                return Err("Raster satu band tanpa color table membutuhkan warna kelas yang ditentukan pengguna.".to_string());
+            }
+            staged = rgba;
+        } else if is_byte && band_count >= 3 {
+            add_alpha = band_count == 3;
+            staged = raster_path.to_string();
+        } else {
+            return Err("Format band raster belum didukung (butuh 1 band, atau RGB/RGBA 8-bit).".to_string());
+        }
+
+        let warped = work.join("warped.tif").to_string_lossy().to_string();
+        let mut args: Vec<String> = vec![
+            "-t_srs".into(), "EPSG:3857".into(),
+            "-r".into(), if categorical { "near".into() } else { "bilinear".into() },
+            "-of".into(), "GTiff".into(), "-overwrite".into(),
+        ];
+        if add_alpha {
+            args.push("-dstalpha".into());
+        }
+        args.push(staged);
+        args.push(warped.clone());
+        run_gdal_tool("gdalwarp", &args)?;
+
+        let tiles_dir = Path::new(out_dir).join("tiles").join(slug);
+        if tiles_dir.exists() {
+            std::fs::remove_dir_all(&tiles_dir).map_err(|e| format!("Gagal membersihkan folder tile lama: {e}"))?;
+        }
+        std::fs::create_dir_all(&tiles_dir).map_err(|e| format!("Gagal membuat folder tile: {e}"))?;
+        run_gdal_tool("gdal2tiles.py", &[
+            "--xyz".into(), "-z".into(), format!("{min_zoom}-{max_zoom}"),
+            "-r".into(), if categorical { "near".into() } else { "bilinear".into() },
+            "-w".into(), "none".into(), warped, tiles_dir.to_string_lossy().to_string(),
+        ])?;
+
+        let tile_count = WalkDir::new(&tiles_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("png"))
+            .count();
+
+        Ok(RasterTilesResult {
+            tiles_dir: tiles_dir.to_string_lossy().to_string(),
+            tile_url_template: format!("tiles/{slug}/{{z}}/{{x}}/{{y}}.png"),
+            south, west, north, east, min_zoom, max_zoom, tile_count,
+        })
+    })();
+
+    let _ = std::fs::remove_dir_all(&work);
+    result
+}
+
+#[tauri::command]
+async fn prepare_raster_tiles(
+    raster_path: String,
+    out_dir: String,
+    slug: String,
+    min_zoom: u32,
+    max_zoom: u32,
+    categorical: bool,
+    colors: Vec<RasterClassColor>,
+) -> Result<RasterTilesResult, String> {
+    prepare_raster_tiles_blocking(&raster_path, &out_dir, &slugify(&slug), min_zoom, max_zoom, categorical, &colors)
+}
+
+#[cfg(test)]
+mod raster_tests {
+    #[test]
+    fn raster_tiles_from_env() {
+        let Ok(tif) = std::env::var("GIS2WEB_RASTER_TIF") else { return };
+        let out = std::env::var("GIS2WEB_RASTER_OUT").unwrap_or_else(|_| "/tmp/gis2web_raster_out".into());
+        let colors = ["#c8553d", "#3fa66b", "#2f6fd0", "#4a8fb5"]
+            .iter()
+            .enumerate()
+            .map(|(i, c)| super::RasterClassColor { value: (i + 1) as f64, color: c.to_string() })
+            .collect::<Vec<_>>();
+        let r = super::prepare_raster_tiles_blocking(&tif, &out, "uji", 12, 19, true, &colors)
+            .expect("prepare gagal");
+        println!("{}", serde_json::to_string_pretty(&r).unwrap());
     }
 }
 
@@ -3303,6 +3511,7 @@ pub fn run() {
             generate_tile_pyramid,
             inspect_shapefiles,
             scan_gis_folder,
+            prepare_raster_tiles,
             get_layer_geojson,
             export_web_gis
         ])
