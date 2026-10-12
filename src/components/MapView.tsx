@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fetchLayerGeojson } from "../lib/layerGeojsonCache";
-import { styleForLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getStrongHighlightStyle, getSubtleHighlightStyle, getPreviewHighlightStyle } from "../lib/layerStyle";
+import { styleForLayer, isClassifiedLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getStrongHighlightStyle, getSubtleHighlightStyle, getPreviewHighlightStyle } from "../lib/layerStyle";
 import { getFeatureCandidates } from "../lib/featureHitTest";
 import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, BasemapOption, FeatureDisplayMode } from "./ConfigurationPanel";
@@ -568,7 +568,7 @@ function MapView({
             const resolvedColor = hasClassifiedStyle
               ? resolveFeatureColor(layer, categoryOverrides, feature, layerColor)
               : layerColor;
-            return styleForLayer(resolvedColor, isBoundary, layerOpacity);
+            return styleForLayer(resolvedColor, isBoundary, layerOpacity, isClassifiedLayer(layer));
           };
 
           const geoLayer = L.geoJSON(geojsonData, {
@@ -726,7 +726,7 @@ function MapView({
         const resolvedColor = hasCategories
           ? resolveFeatureColor(layer, categoryOverrides, feature, layerColor)
           : layerColor;
-        return styleForLayer(resolvedColor, isBoundary, layerOpacity);
+        return styleForLayer(resolvedColor, isBoundary, layerOpacity, isClassifiedLayer(layer));
       };
 
       geoLayer.setStyle(style);
@@ -754,7 +754,7 @@ function MapView({
         const resolvedColor = hasCategories
           ? resolveFeatureColor(layer, categoryOverrides, feature, layerColor)
           : layerColor;
-        return styleForLayer(resolvedColor, isBoundary, layerOpacity);
+        return styleForLayer(resolvedColor, isBoundary, layerOpacity, isClassifiedLayer(layer));
       };
 
       geoLayer.setStyle(style);

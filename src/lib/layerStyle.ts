@@ -46,14 +46,26 @@ export function computeLabeledFeatureIndexes(
   return result;
 }
 
+export function isClassifiedLayer(layer: LayerInfo): boolean {
+  return (
+    !!layer.category_field &&
+    ((layer.categories?.length ?? 0) > 0 || (layer.ranges?.length ?? 0) > 0)
+  );
+}
+
+// Layer berkategori/berentang: isian memakai warna kelas, garis tepi gelap
+// tipis. Layer satu warna dan Boundary tetap memakai gaya lama.
 export function styleForLayer(
   color: string,
   isBoundary: boolean,
-  fillOpacity: number
+  fillOpacity: number,
+  classified = false
 ): L.PathOptions {
-  return isBoundary
-    ? { color, weight: 2, fillOpacity: 0 }
-    : { color, weight: 1.5, fillOpacity };
+  if (isBoundary) return { color, weight: 2, fillOpacity: 0 };
+  if (classified) {
+    return { color: "#1f2937", weight: 0.8, fillColor: color, fillOpacity };
+  }
+  return { color, weight: 1.5, fillOpacity };
 }
 
 export function resolveFeatureColor(

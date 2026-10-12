@@ -3043,7 +3043,14 @@ function loadLayer(layer) {{
     .then((geojson) => {{
       layerGeojsonData[layer.layerIndex] = geojson;
 
-      const styleFn = (feature) => ({{
+      const classified = !layer.isBoundary && !!layer.categoryField &&
+        ((layer.categories && layer.categories.length > 0) || (layer.ranges && layer.ranges.length > 0));
+      const styleFn = (feature) => classified ? ({{
+        color: '#1f2937',
+        weight: 0.8,
+        fillColor: resolveFeatureColor(layer, feature),
+        fillOpacity: layer.opacity,
+      }}) : ({{
         color: resolveFeatureColor(layer, feature),
         weight: layer.isBoundary ? 2 : 1.5,
         fillOpacity: layer.isBoundary ? 0 : layer.opacity,

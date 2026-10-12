@@ -7,7 +7,7 @@ import { scaleBarGradient, createFixedScaleControl } from "../lib/scaleBar";
 import type { LayerInfo } from "./ProjectPanel";
 import type { WebGisConfig, ExportConfig } from "./ConfigurationPanel";
 import { getCachedGeojson } from "../lib/layerGeojsonCache";
-import { styleForLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getPreviewHighlightStyle, getStrongHighlightStyle } from "../lib/layerStyle";
+import { styleForLayer, isClassifiedLayer, resolveFeatureColor, computeLabeledFeatureIndexes, getPreviewHighlightStyle, getStrongHighlightStyle } from "../lib/layerStyle";
 import { getFeatureCandidates } from "../lib/featureHitTest";
 
 interface ExportPreviewMapProps {
@@ -151,7 +151,7 @@ function ExportPreviewMap({
         const resolvedColor = hasClassifiedStyle
           ? resolveFeatureColor(layer, categoryOverrides, feature, layerColor)
           : layerColor;
-        const base = styleForLayer(resolvedColor, isBoundary, layerOpacity);
+        const base = styleForLayer(resolvedColor, isBoundary, layerOpacity, isClassifiedLayer(layer));
         // Boundary: fill hampir transparan agar area dalam polygon tetap menangkap klik.
         return isBoundary ? { ...base, fill: true, fillOpacity: 0.001 } : base;
       };
