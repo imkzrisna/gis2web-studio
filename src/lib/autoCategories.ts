@@ -3,7 +3,7 @@ import type { CategoryInfo } from "../components/ProjectPanel";
 export const MAX_CATEGORY_VALUES = 20;
 
 const PALETTE = [
-  "#22a06b", "#2f80ed", "#56a8d6", "#d9533a", "#f2c94c",
+  "#c8553d", "#3fa66b", "#2f6fd0", "#4a8fb5", "#f2c94c",
   "#9b51e0", "#f2994a", "#27ae60", "#eb5757", "#00b8a9",
 ];
 

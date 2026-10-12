@@ -339,6 +339,17 @@ function ProjectPanel({
                       </p>
                     </div>
 
+                    {boundaryLayerIndex !== null && (
+                      <button
+                        type="button"
+                        className="layer-reset-btn"
+                        onClick={() => onBoundaryLayerIndexChange(null)}
+                        title="Tidak memakai Boundary Layer"
+                      >
+                        Tanpa boundary
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="layer-flow-next-btn"

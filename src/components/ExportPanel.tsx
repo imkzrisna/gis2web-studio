@@ -148,7 +148,6 @@ function ExportPanel({
     !zoomError &&
     projectPath !== null &&
     selectedLayerIndexes.length > 0 &&
-    boundaryLayerIndex !== null &&
     outputDir !== null;
 
   async function handleChooseFolder() {
