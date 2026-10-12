@@ -46,6 +46,7 @@ export interface LayerInfo {
   crs?: string | null;
   raster?: RasterMeta | null;
   source_format?: string;
+  issue?: string | null;
 }
 
 export function isRasterLayer(layer: LayerInfo | undefined | null): boolean {
@@ -299,6 +300,7 @@ function ProjectPanel({
                                 <input
                                   type="checkbox"
                                   checked={selectedLayerIndexes.includes(index)}
+                                  disabled={!!layer.issue}
                                   onChange={() => toggleLayerSelected(index)}
                                 />
                               </td>
@@ -316,7 +318,12 @@ function ProjectPanel({
                                   }
                                 />
                               </td>
-                              <td>{layer.name}</td>
+                              <td>
+                                {layer.name}
+                                {layer.issue && (
+                                  <div className="layer-note" style={{ color: "#b45309" }}>{layer.issue}</div>
+                                )}
+                              </td>
                               <td>
                                 {layer.geometry_type}
                                 {!isPolygon && (

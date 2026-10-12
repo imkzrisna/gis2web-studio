@@ -141,7 +141,15 @@ function ImportToolbar({
       // selesai dimuat ke cache.
       if (result.length > 0) {
         setLabel(`Menyiapkan preview ${result.length} layer...`);
-        await prefetchAllLayers(selected, result.map((l) => l.datasource));
+        for (const l of result) {
+          if (l.kind === "raster" && !l.issue && l.raster && !l.raster.has_color_table && l.raster.suggested_type === "single_band") {
+            l.categories = await fetchRasterClassCategories(l.datasource);
+          }
+        }
+        await prefetchAllLayers(
+          selected,
+          result.filter((l) => l.kind !== "raster").map((l) => l.datasource)
+        );
       }
 
       onLayersLoaded(result);

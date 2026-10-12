@@ -48,6 +48,11 @@ struct LayerInfo {
     categories: Option<Vec<CategoryInfo>>,
     ranges: Option<Vec<GraduatedRangeInfo>>,
     labeling: Option<LabelingInfo>,
+    kind: Option<String>,
+    crs: Option<String>,
+    raster: Option<RasterMeta>,
+    source_format: Option<String>,
+    issue: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -727,6 +732,29 @@ fn parse_layers(xml_content: &str) -> Result<Vec<LayerInfo>, String> {
                     None => true, // beberapa versi QGIS tidak menulis atribut type; anggap vector agar tidak menghapus layer yang valid
                 };
 
+                let ds_base = current_datasource.split('|').next().unwrap_or("").to_lowercase();
+                if current_layer_type.as_deref() == Some("raster")
+                    && (ds_base.ends_with(".tif") || ds_base.ends_with(".tiff"))
+                {
+                    if let Some(name) = current_name.take() {
+                        layers.push(LayerInfo {
+                            name,
+                            geometry_type: "Raster".to_string(),
+                            datasource: current_datasource.split('|').next().unwrap_or("").to_string(),
+                            color: None,
+                            category_field: None,
+                            categories: None,
+                            ranges: None,
+                            labeling: None,
+                            kind: Some("raster".to_string()),
+                            crs: None,
+                            raster: None,
+                            source_format: None,
+                            issue: None,
+                        });
+                    }
+                }
+
                 if let Some(name) = current_name.take().filter(|_| is_vector_layer) {
                     let final_categories = if category_defs.is_empty() {
                         None
@@ -784,6 +812,11 @@ fn parse_layers(xml_content: &str) -> Result<Vec<LayerInfo>, String> {
                         categories: final_categories,
                         ranges: final_ranges,
                         labeling: final_labeling,
+                        kind: None,
+                        crs: None,
+                        raster: None,
+                        source_format: None,
+                        issue: None,
                     });
                 }
                 in_maplayer = false;
@@ -800,6 +833,46 @@ fn parse_layers(xml_content: &str) -> Result<Vec<LayerInfo>, String> {
 
 #[tauri::command]
 fn parse_qgis_project(path: String) -> Result<Vec<LayerInfo>, String> {
+    let project_dir = Path::new(&path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let mut layers = parse_qgis_project_inner(path)?;
+    let gdalinfo = resolve_gdal_bin("gdalinfo");
+    for layer in layers.iter_mut() {
+        if layer.kind.as_deref() != Some("raster") {
+            continue;
+        }
+        match resolve_data_path(&project_dir, &layer.datasource) {
+            Ok(found) => {
+                let rel = found
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_string();
+                let ds = scan_raster_dataset(gdalinfo.as_deref(), &found, &rel, Vec::new());
+                layer.datasource = found.to_string_lossy().to_string();
+                layer.crs = ds.crs.clone();
+                layer.raster = ds.raster.clone();
+                if ds.status == "error" {
+                    layer.issue = Some(ds.messages.join(" "));
+                } else if ds.crs.is_none() {
+                    layer.issue = Some("CRS raster tidak diketahui; tidak dapat ditempatkan di peta.".to_string());
+                }
+            }
+            Err(_) => {
+                let base = Path::new(&layer.datasource)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("?")
+                    .to_string();
+                layer.issue = Some(format!(
+                    "File raster tidak ditemukan: {base}. Letakkan file di folder project lalu import ulang."
+                ));
+            }
+        }
+    }
+    Ok(layers)
+}
+
+fn parse_qgis_project_inner(path: String) -> Result<Vec<LayerInfo>, String> {
     let xml_content = extract_qgs_content(&path)?;
     parse_layers(&xml_content)
 }
@@ -962,6 +1035,11 @@ fn inspect_shapefiles(paths: Vec<String>) -> Result<Vec<LayerInfo>, String> {
             categories: None,
             ranges: None,
             labeling: None,
+            kind: None,
+            crs: None,
+            raster: None,
+            source_format: None,
+            issue: None,
         });
     }
 
