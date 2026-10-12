@@ -1681,6 +1681,11 @@ fn raster_preview_dir() -> String {
     std::env::temp_dir().join("gis2web_raster_preview").to_string_lossy().to_string()
 }
 
+#[tauri::command]
+fn clear_raster_preview() {
+    let _ = std::fs::remove_dir_all(std::env::temp_dir().join("gis2web_raster_preview"));
+}
+
 #[cfg(test)]
 mod class_tests {
     #[test]
@@ -3691,6 +3696,7 @@ pub fn run() {
             prepare_raster_tiles,
             raster_class_values,
             raster_preview_dir,
+            clear_raster_preview,
             get_layer_geojson,
             export_web_gis
         ])

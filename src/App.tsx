@@ -221,6 +221,10 @@ function App() {
   }, [projectPath, config, exportConfig, labelPositions]);
   const [gdalAvailable, setGdalAvailable] = useState(false);
 
+  useEffect(() => {
+    invoke("clear_raster_preview").catch(() => {});
+  }, []);
+
   // Layer basemap/tile (mis. "OpenStreetMap" XYZ) yang ikut terbaca dari
   // file project QGIS bukan data vektor sungguhan dan tidak bisa diproses
   // sebagai layer GIS biasa, jadi disaring di sini sebelum masuk ke daftar

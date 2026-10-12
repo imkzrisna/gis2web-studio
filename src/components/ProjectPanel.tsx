@@ -453,12 +453,16 @@ function ProjectPanel({
                                     {expandedLayerIndex === index ? "\u25B2" : "\u25BC"}
                                   </button>
                                 ) : (
-                                  <input
-                                    type="color"
-                                    value={color}
-                                    onChange={(e) => onLayerColorChange(index, e.target.value)}
-                                    title="Pilih warna layer"
-                                  />
+                                  layer.kind === "raster" ? (
+                                    <span className="layer-note" title="Raster memakai warna aslinya">RGB</span>
+                                  ) : (
+                                    <input
+                                      type="color"
+                                      value={color}
+                                      onChange={(e) => onLayerColorChange(index, e.target.value)}
+                                      title="Pilih warna layer"
+                                    />
+                                  )
                                 )}
                               </td>
                               <td onClick={(e) => e.stopPropagation()} className="opacity-cell">
