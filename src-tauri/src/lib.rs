@@ -1543,6 +1543,23 @@ fn prepare_raster_tiles_blocking(
         args.push(warped.clone());
         run_gdal_tool("gdalwarp", &args)?;
 
+        // Batas zoom efektif: tidak lebih halus dari resolusi asli raster.
+        let winfo = gdal_command(&gdalinfo)
+            .arg("-json")
+            .arg(&warped)
+            .output()
+            .map_err(|e| format!("Gagal membaca hasil reproyeksi: {e}"))?;
+        let wv: serde_json::Value = serde_json::from_slice(&winfo.stdout)
+            .map_err(|e| format!("Output gdalinfo (hasil reproyeksi) tidak valid: {e}"))?;
+        let pixel_m = wv["geoTransform"][1].as_f64().unwrap_or(0.0).abs();
+        let native_zoom = if pixel_m > 0.0 {
+            (156543.03392804097_f64 / pixel_m).log2().ceil().clamp(0.0, 24.0) as u32
+        } else {
+            max_zoom
+        };
+        let max_zoom = max_zoom.min(native_zoom);
+        let min_zoom = min_zoom.min(max_zoom);
+
         let tiles_dir = Path::new(out_dir).join("tiles").join(slug);
         if tiles_dir.exists() {
             std::fs::remove_dir_all(&tiles_dir).map_err(|e| format!("Gagal membersihkan folder tile lama: {e}"))?;
