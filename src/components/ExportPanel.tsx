@@ -1,3 +1,4 @@
+import type { LayerValueMappings } from "../lib/valueMapping";
 import type { LabelPositions } from "../lib/labelPositions";
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -30,6 +31,7 @@ interface ExportPanelProps {
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
   layerFieldAliases: Record<number, Record<string, string>>;
+  layerValueMappings: LayerValueMappings;
   labelPositions: LabelPositions;
   onLabelPositionsChange: (positions: LabelPositions) => void;
   config: WebGisConfig;
@@ -69,6 +71,7 @@ interface ExportLayerInput {
   labeling: ExportLabelingInput | null;
   visible_fields: string[] | null;
   field_aliases: Record<string, string> | null;
+  value_mappings: Record<string, Record<string, string>> | null;
   is_boundary: boolean;
   is_focus: boolean;
   kind: string;
@@ -132,6 +135,7 @@ function ExportPanel({
   layerOrder,
   layerVisibleFields,
   layerFieldAliases,
+  layerValueMappings,
   labelPositions,
   onLabelPositionsChange,
   config,
@@ -214,6 +218,7 @@ function ExportPanel({
           labeling,
           visible_fields: layerVisibleFields[index] ?? null,
           field_aliases: layerFieldAliases[index] ?? null,
+          value_mappings: layerValueMappings[index] ?? null,
           is_boundary: isBoundary,
           is_focus: index === boundaryLayerIndex,
           kind: layer.kind ?? "vector",
@@ -528,6 +533,7 @@ function ExportPanel({
           layerOrder={layerOrder}
           layerVisibleFields={layerVisibleFields}
           layerFieldAliases={layerFieldAliases}
+          layerValueMappings={layerValueMappings}
           labelPositions={labelPositions}
           onLabelPositionsChange={onLabelPositionsChange}
           config={config}

@@ -2086,6 +2086,8 @@ struct ExportLayerInput {
     visible_fields: Option<Vec<String>>,
     #[serde(default)]
     field_aliases: Option<std::collections::HashMap<String, String>>,
+    #[serde(default)]
+    value_mappings: Option<std::collections::HashMap<String, std::collections::HashMap<String, String>>>,
     is_boundary: bool,
     #[serde(default)]
     is_focus: bool,
@@ -2919,7 +2921,14 @@ function resolveFeatureColor(layer, feature) {{
   return layer.color;
 }}
 
-function buildFieldsTable(properties, visibleFields, fieldAliases) {{
+function formatValue(value, fieldMap) {{
+  if (value === null || value === undefined) return '-';
+  const raw = String(value);
+  if (fieldMap && Object.prototype.hasOwnProperty.call(fieldMap, raw) && fieldMap[raw] !== '') return fieldMap[raw];
+  return raw;
+}}
+
+function buildFieldsTable(properties, visibleFields, fieldAliases, valueMappings) {{
   if (!properties || Object.keys(properties).length === 0) return null;
   const allKeys = Object.keys(properties);
   const fieldsToShow = Array.isArray(visibleFields)
@@ -2930,7 +2939,7 @@ function buildFieldsTable(properties, visibleFields, fieldAliases) {{
   return fieldsToShow.map((key) => {{
     const value = properties[key];
     const alias = fieldAliases && fieldAliases[key];
-    return {{ key, label: alias || key, value: value === null || value === undefined ? '-' : String(value) }};
+    return {{ key, label: alias || key, value: formatValue(value, valueMappings && valueMappings[key]) }};
   }});
 }}
 
@@ -3140,7 +3149,7 @@ function selectFeature(layerIndex, featureIndex, latlng) {{
   const layerConfig = CONFIG.layers.find((l) => l.layerIndex === layerIndex);
   const geojsonData = layerGeojsonData[layerIndex];
   const feature = geojsonData ? geojsonData.features[featureIndex] : null;
-  const rows = layerConfig && feature ? buildFieldsTable(feature.properties, layerConfig.visibleFields, layerConfig.fieldAliases) : null;
+  const rows = layerConfig && feature ? buildFieldsTable(feature.properties, layerConfig.visibleFields, layerConfig.fieldAliases, layerConfig.valueMappings) : null;
 
   showFeatureCard(layerConfig ? layerConfig.name : '', rows);
 
@@ -3323,11 +3332,13 @@ function renderAttributeTableRows() {{
   }}
 
   const theadHtml = '<thead><tr>' + fieldSet.map((f) => '<th>' + escapeHtml(f) + '</th>').join('') + '</tr></thead>';
+  const attrLayerCfg = CONFIG.layers.find((l) => l.layerIndex === attrSelectedLayerIndex);
+  const attrValueMaps = (attrLayerCfg && attrLayerCfg.valueMappings) || {{}};
   const tbodyRows = features.map((f, featureIndex) => {{
     const isActive = activeFeatureKey === (attrSelectedLayerIndex + ':' + featureIndex);
     const cells = fieldSet.map((field) => {{
       const v = f.properties ? f.properties[field] : undefined;
-      return '<td>' + escapeHtml(v === null || v === undefined ? '-' : String(v)) + '</td>';
+      return '<td>' + escapeHtml(formatValue(v, attrValueMaps[field])) + '</td>';
     }}).join('');
     return '<tr data-feature-index="' + featureIndex + '" class="' + (isActive ? 'active-row' : '') + '">' + cells + '</tr>';
   }}).join('');
@@ -3744,6 +3755,7 @@ fn export_web_gis(
                 "labeling": serde_json::Value::Null,
                 "visibleFields": serde_json::Value::Null,
                 "fieldAliases": serde_json::Value::Null,
+                "valueMappings": serde_json::Value::Null,
                 "isBoundary": false,
                 "isFocus": layer.is_focus,
                 "showAttributeTable": false,
@@ -3803,6 +3815,7 @@ fn export_web_gis(
             "labeling": labeling_json,
             "visibleFields": layer.visible_fields,
             "fieldAliases": layer.field_aliases,
+            "valueMappings": layer.value_mappings,
             "isBoundary": layer.is_boundary,
             "isFocus": layer.is_focus || layer.is_boundary,
             "showAttributeTable": layer.show_attribute_table && !layer.is_boundary,

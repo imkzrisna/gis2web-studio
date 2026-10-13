@@ -556,6 +556,7 @@ function App() {
               layerOrder={layerOrder}
               layerVisibleFields={layerVisibleFields}
               layerFieldAliases={layerFieldAliases}
+              layerValueMappings={layerValueMappings}
               labelPositions={labelPositions}
               onLabelPositionsChange={setLabelPositions}
               config={config}

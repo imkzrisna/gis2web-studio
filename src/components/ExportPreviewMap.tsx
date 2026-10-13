@@ -1,3 +1,4 @@
+import { formatDisplayValue, type LayerValueMappings } from "../lib/valueMapping";
 import ExportPreviewLegend from "./ExportPreviewLegend";
 import { attachLabelDrag, isLabelPositionAllowed, type LabelDragCtx } from "../lib/labelDrag";
 import type { LabelPositions } from "../lib/labelPositions";
@@ -25,6 +26,7 @@ interface ExportPreviewMapProps {
   layerOrder: number[];
   layerVisibleFields: Record<number, string[]>;
   layerFieldAliases: Record<number, Record<string, string>>;
+  layerValueMappings: LayerValueMappings;
   config: WebGisConfig;
   exportConfig: ExportConfig;
   device?: "desktop" | "mobile";
@@ -48,6 +50,7 @@ function ExportPreviewMap({
   layerOrder,
   layerVisibleFields,
   layerFieldAliases,
+  layerValueMappings,
   config,
   exportConfig,
   device = "desktop",
@@ -70,8 +73,8 @@ function ExportPreviewMap({
     matches: [],
     index: 0,
   });
-  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes });
-  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerFieldAliases, layerPointSizes };
+  const ctxRef = useRef({ layers, layerOrder, layerVisibleFields, layerFieldAliases, layerValueMappings, layerPointSizes });
+  ctxRef.current = { layers, layerOrder, layerVisibleFields, layerFieldAliases, layerValueMappings, layerPointSizes };
   const labelEditRef = useRef(false);
   const labelPositionsRef = useRef<LabelPositions>(labelPositions);
   const onLabelPositionsChangeRef = useRef(onLabelPositionsChange);
@@ -447,7 +450,7 @@ function ExportPreviewMap({
       const aliases = ctx.layerFieldAliases[sel.layerIndex] ?? {};
       const rows = fieldsToShow.map((key) => {
         const value = props ? props[key] : undefined;
-        return { key, label: aliases[key] || key, value: value === null || value === undefined ? "-" : String(value) };
+        return { key, label: aliases[key] || key, value: formatDisplayValue(value, ctx.layerValueMappings[sel.layerIndex]?.[key]) };
       });
       setCard({ layerName: layer?.name ?? "", layerIndex: sel.layerIndex, featureIndex: sel.featureIndex, rows });
       map.closePopup();
