@@ -311,22 +311,6 @@ function App() {
     });
   }
 
-  function handleLayerCategoryLabelChange(index: number, value: string, label: string) {
-    const clean = label.trim();
-    setLayers((prev) =>
-      prev.map((l, i) =>
-        i === index && l.categories
-          ? {
-              ...l,
-              categories: l.categories.map((c) =>
-                c.value === value ? { ...c, label: clean === "" ? value : clean } : c
-              ),
-            }
-          : l
-      )
-    );
-  }
-
   function handleLayerColorChange(index: number, color: string) {
     setLayerColors((prev) => ({ ...prev, [index]: color }));
   }
@@ -530,7 +514,6 @@ function App() {
                   layerOrder={layerOrder}
                   onLayerOrderChange={handleLayerOrderChange}
                   onLayerCategoryFieldChange={handleLayerCategoryFieldChange}
-                  onLayerCategoryLabelChange={handleLayerCategoryLabelChange}
                   activeLayerIndex={activeLayerIndex}
                   onFocusLayer={setActiveLayerIndex}
                 />

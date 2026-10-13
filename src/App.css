@@ -2570,15 +2570,6 @@ button {
   min-width: 0;
 }
 
-.category-label-input {
-  font: inherit;
-  font-size: 0.85rem;
-  width: 150px;
-  padding: 2px 6px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-}
 
 .feature-info-card-mapping-select {
   width: calc(100% - 16px);
