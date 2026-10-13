@@ -1,3 +1,4 @@
+import { formatDisplayValue, type LayerValueMappings } from "../lib/valueMapping";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseGeojsonForAttributeTable, type GeojsonFeatureLike } from "../lib/geojsonFields";
 import { fetchLayerGeojson, getCachedGeojson } from "../lib/layerGeojsonCache";
@@ -13,6 +14,13 @@ interface FeatureInfoCardProps {
   onVisibleFieldsChange: (layerIndex: number, fields: string[] | null) => void;
   fieldAliases: Record<number, Record<string, string>>;
   onFieldAliasChange: (layerIndex: number, field: string, alias: string) => void;
+  valueMappings: LayerValueMappings;
+  onValueMappingChange: (
+    layerIndex: number,
+    field: string,
+    rawValue: string,
+    label: string
+  ) => void;
 }
 
 function FeatureInfoCard({
@@ -25,6 +33,8 @@ function FeatureInfoCard({
   onVisibleFieldsChange,
   fieldAliases,
   onFieldAliasChange,
+  valueMappings,
+  onValueMappingChange,
 }: FeatureInfoCardProps) {
   const layer = activeFeature ? layers[activeFeature.layerIndex] : undefined;
   const [fetchedText, setFetchedText] = useState<string | null>(null);
@@ -92,6 +102,39 @@ function FeatureInfoCard({
     return parseGeojsonForAttributeTable(fetchedText).fields;
   }, [fetchedText]);
 
+  const [mappingOpen, setMappingOpen] = useState(false);
+  const [mappingField, setMappingField] = useState("");
+  const mappingRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!mappingOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (mappingRef.current && !mappingRef.current.contains(e.target as Node)) {
+        setMappingOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mappingOpen]);
+
+  const activeMappingField = allFields.includes(mappingField) ? mappingField : (allFields[0] ?? "");
+
+  const mappingValues = useMemo(() => {
+    const MAX_UNIQUE_VALUES = 200;
+    if (!mappingOpen || !fetchedText || !activeMappingField) {
+      return { values: [] as string[], truncated: false };
+    }
+    const set = new Set<string>();
+    for (const f of parseGeojsonForAttributeTable(fetchedText).features) {
+      const v = f.properties?.[activeMappingField];
+      if (v !== null && v !== undefined) set.add(String(v));
+    }
+    const all = Array.from(set);
+    const numeric = all.every((v) => v.trim() !== "" && !Number.isNaN(Number(v)));
+    all.sort((a, b) => (numeric ? Number(a) - Number(b) : a.localeCompare(b)));
+    return { values: all.slice(0, MAX_UNIQUE_VALUES), truncated: all.length > MAX_UNIQUE_VALUES };
+  }, [mappingOpen, fetchedText, activeMappingField]);
+
   const showColumnSearch = allFields.length > 8;
   const displayedFields = useMemo(() => {
     if (!showColumnSearch || columnSearchQuery.trim() === "") return allFields;
@@ -156,6 +199,71 @@ function FeatureInfoCard({
           <span className="feature-info-card-subtitle">{layer.name}</span>
         </div>
         <div className="feature-info-card-header-actions">
+          {allFields.length > 0 && (
+            <div className="feature-info-card-column-picker" ref={mappingRef}>
+              <button
+                type="button"
+                className="feature-info-card-icon-btn"
+                onClick={() => setMappingOpen((v) => !v)}
+                title="Pemetaan nilai atribut"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" />
+                  <circle cx="7.5" cy="7.5" r="1.2" />
+                </svg>
+              </button>
+              {mappingOpen && (
+                <div className="feature-info-card-column-popover">
+                  <div className="feature-info-card-column-popover-header">
+                    <span>Pemetaan nilai</span>
+                  </div>
+                  <select
+                    className="feature-info-card-mapping-select"
+                    value={activeMappingField}
+                    onChange={(e) => setMappingField(e.target.value)}
+                  >
+                    {allFields.map((f) => (
+                      <option key={f} value={f}>
+                        {layerAliases[f] || f}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="feature-info-card-column-list">
+                    {mappingValues.values.length === 0 ? (
+                      <div className="feature-info-card-column-empty">Tidak ada nilai.</div>
+                    ) : (
+                      mappingValues.values.map((raw) => {
+                        const current = valueMappings[layerIndex]?.[activeMappingField]?.[raw] ?? "";
+                        return (
+                          <div key={raw} className="feature-info-card-column-item">
+                            <span className="feature-info-card-column-name">{raw}</span>
+                            <input
+                              type="text"
+                              className="feature-info-card-alias-input"
+                              key={`${activeMappingField}:${raw}:${current}`}
+                              defaultValue={current}
+                              placeholder={raw}
+                              onBlur={(e) =>
+                                onValueMappingChange(layerIndex, activeMappingField, raw, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              }}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  <div className="feature-info-card-column-hint">
+                    {mappingValues.truncated
+                      ? "Hanya 200 nilai pertama ditampilkan \u00b7 kosongkan label = nilai asli"
+                      : "Enter = simpan \u00b7 kosongkan label = nilai asli"}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {allFields.length > 0 && (
             <div className="feature-info-card-column-picker" ref={columnPickerRef}>
               <button
@@ -303,7 +411,7 @@ function FeatureInfoCard({
                 <tr key={key}>
                   <th>{layerAliases[key] || key}</th>
                   <td>
-                    {value === null || value === undefined ? "-" : String(value)}
+                    {formatDisplayValue(value, valueMappings[layerIndex]?.[key])}
                   </td>
                 </tr>
               ))}

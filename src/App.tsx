@@ -1,3 +1,4 @@
+import type { LayerValueMappings } from "./lib/valueMapping";
 import { sanitizeLabelPositions, type LabelPositions } from "./lib/labelPositions";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -86,6 +87,38 @@ function App() {
   const [layerFieldAliases, setLayerFieldAliases] = useState<
     Record<number, Record<string, string>>
   >({});
+
+  const [layerValueMappings, setLayerValueMappings] = useState<LayerValueMappings>({});
+
+  function handleValueMappingChange(
+    layerIndex: number,
+    field: string,
+    rawValue: string,
+    label: string
+  ) {
+    setLayerValueMappings((prev) => {
+      const fieldMap = { ...(prev[layerIndex]?.[field] ?? {}) };
+      const clean = label.trim();
+      if (clean === "") {
+        delete fieldMap[rawValue];
+      } else {
+        fieldMap[rawValue] = clean;
+      }
+      const layerMap = { ...(prev[layerIndex] ?? {}) };
+      if (Object.keys(fieldMap).length === 0) {
+        delete layerMap[field];
+      } else {
+        layerMap[field] = fieldMap;
+      }
+      const next = { ...prev };
+      if (Object.keys(layerMap).length === 0) {
+        delete next[layerIndex];
+      } else {
+        next[layerIndex] = layerMap;
+      }
+      return next;
+    });
+  }
 
   function handleFieldAliasChange(layerIndex: number, field: string, alias: string) {
     setLayerFieldAliases((prev) => {
@@ -278,6 +311,22 @@ function App() {
     });
   }
 
+  function handleLayerCategoryLabelChange(index: number, value: string, label: string) {
+    const clean = label.trim();
+    setLayers((prev) =>
+      prev.map((l, i) =>
+        i === index && l.categories
+          ? {
+              ...l,
+              categories: l.categories.map((c) =>
+                c.value === value ? { ...c, label: clean === "" ? value : clean } : c
+              ),
+            }
+          : l
+      )
+    );
+  }
+
   function handleLayerColorChange(index: number, color: string) {
     setLayerColors((prev) => ({ ...prev, [index]: color }));
   }
@@ -431,6 +480,7 @@ function App() {
                   onFocusFeature={handleFocusFeature}
                   visibleFields={layerVisibleFields}
                   fieldAliases={layerFieldAliases}
+                  valueMappings={layerValueMappings}
                   featureDisplayMode="card"
                 />
                 <FeatureInfoCard
@@ -443,6 +493,8 @@ function App() {
                   onVisibleFieldsChange={handleVisibleFieldsChange}
                   fieldAliases={layerFieldAliases}
                   onFieldAliasChange={handleFieldAliasChange}
+                  valueMappings={layerValueMappings}
+                  onValueMappingChange={handleValueMappingChange}
                 />
                 {!attributeTableCollapsed && (
                   <AttributeTablePanel
@@ -478,6 +530,7 @@ function App() {
                   layerOrder={layerOrder}
                   onLayerOrderChange={handleLayerOrderChange}
                   onLayerCategoryFieldChange={handleLayerCategoryFieldChange}
+                  onLayerCategoryLabelChange={handleLayerCategoryLabelChange}
                   activeLayerIndex={activeLayerIndex}
                   onFocusLayer={setActiveLayerIndex}
                 />

@@ -40,6 +40,7 @@ interface ExportPanelProps {
 interface ExportCategoryInput {
   value: string;
   color: string;
+  label?: string;
 }
 
 interface ExportRangeInput {
@@ -182,6 +183,7 @@ function ExportPanel({
           layer.categories && layer.categories.length > 0
             ? layer.categories.map((cat) => ({
                 value: cat.value,
+                label: cat.label,
                 color: categoryOverrides?.[cat.value] ?? cat.color,
               }))
             : null;

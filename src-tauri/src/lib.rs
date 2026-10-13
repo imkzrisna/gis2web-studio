@@ -2052,6 +2052,8 @@ fn slugify(name: &str) -> String {
 struct ExportCategoryInput {
     value: String,
     color: String,
+    #[serde(default)]
+    label: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -3439,7 +3441,7 @@ function buildLegendEntries(layerCfg) {{
   if (layerCfg.isBoundary) return null;
   let entries = null;
   if ((layerCfg.categoryField || layerCfg.kind === 'raster') && layerCfg.categories && layerCfg.categories.length > 0) {{
-    entries = layerCfg.categories.map((c) => ({{ label: c.value === 'NULL' ? '(kosong)' : c.value, color: c.color }}));
+    entries = layerCfg.categories.map((c) => ({{ label: c.label || (c.value === 'NULL' ? '(kosong)' : c.value), color: c.color }}));
   }} else if (layerCfg.categoryField && layerCfg.ranges && layerCfg.ranges.length > 0) {{
     entries = layerCfg.ranges.map((r) => ({{ label: r.label, color: r.color }}));
   }}
@@ -3724,7 +3726,7 @@ fn export_web_gis(
             .map_err(|e| format!("Raster \"{}\": {e}", layer.name))?;
             let cats_json = layer.categories.as_ref().map(|cats| {
                 cats.iter()
-                    .map(|c| serde_json::json!({ "value": c.value, "color": c.color }))
+                    .map(|c| serde_json::json!({ "value": c.value, "label": c.label, "color": c.color }))
                     .collect::<Vec<_>>()
             });
             layer_entries.push(serde_json::json!({
@@ -3762,7 +3764,7 @@ fn export_web_gis(
 
         let categories_json = layer.categories.as_ref().map(|cats| {
             cats.iter()
-                .map(|c| serde_json::json!({ "value": c.value, "color": c.color }))
+                .map(|c| serde_json::json!({ "value": c.value, "label": c.label, "color": c.color }))
                 .collect::<Vec<_>>()
         });
 

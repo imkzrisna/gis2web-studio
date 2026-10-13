@@ -79,6 +79,7 @@ interface ProjectPanelProps {
   activeLayerIndex: number | null;
   onFocusLayer: (index: number) => void;
   onLayerCategoryFieldChange?: (index: number, field: string | null) => void;
+  onLayerCategoryLabelChange?: (index: number, value: string, label: string) => void;
 }
 
 type PanelTab = "layers" | "order";
@@ -109,6 +110,7 @@ function ProjectPanel({
   activeLayerIndex,
   onFocusLayer,
   onLayerCategoryFieldChange,
+  onLayerCategoryLabelChange,
 }: ProjectPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [panelTab, setPanelTab] = useState<PanelTab>("layers");
@@ -556,7 +558,19 @@ function ProjectPanel({
                                             }
                                             title={`Warna untuk ${cat.label}`}
                                           />
-                                          <span className="category-item-label">{cat.label}</span>
+                                          <input
+                                            type="text"
+                                            className="category-label-input"
+                                            key={`${cat.value}:${cat.label}`}
+                                            defaultValue={cat.label}
+                                            title={`Nama untuk kelas ${cat.value} (tampil di legenda)`}
+                                            onBlur={(e) =>
+                                              onLayerCategoryLabelChange?.(index, cat.value, e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                            }}
+                                          />
                                         </div>
                                       );
                                     })}

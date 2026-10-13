@@ -1,3 +1,4 @@
+import { formatDisplayValue, type LayerValueMappings } from "../lib/valueMapping";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -25,6 +26,7 @@ interface MapViewProps {
   onFocusFeature: (layerIndex: number, featureIndex: number) => void;
   visibleFields: Record<number, string[]>;
   fieldAliases: Record<number, Record<string, string>>;
+  valueMappings: LayerValueMappings;
   featureDisplayMode: FeatureDisplayMode;
 }
 
@@ -122,6 +124,7 @@ function MapView({
   onFocusFeature,
   visibleFields,
   fieldAliases,
+  valueMappings,
   featureDisplayMode,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -151,6 +154,7 @@ function MapView({
   }, [boundaryLayerIndex]);
   const visibleFieldsRef = useRef<Record<number, string[]>>(visibleFields);
   const fieldAliasesRef = useRef<Record<number, Record<string, string>>>(fieldAliases);
+  const valueMappingsRef = useRef<LayerValueMappings>(valueMappings);
   const featureDisplayModeRef = useRef<FeatureDisplayMode>(featureDisplayMode);
 
   useEffect(() => {
@@ -180,7 +184,8 @@ function MapView({
   useEffect(() => {
     visibleFieldsRef.current = visibleFields;
     fieldAliasesRef.current = fieldAliases;
-  }, [visibleFields, fieldAliases]);
+    valueMappingsRef.current = valueMappings;
+  }, [visibleFields, fieldAliases, valueMappings]);
 
   useEffect(() => {
     featureDisplayModeRef.current = featureDisplayMode;
@@ -607,7 +612,7 @@ function MapView({
                     .map((key) => {
                       const value = properties[key];
                       return `<tr><th>${escapeHtml(aliases[key] || key)}</th><td>${escapeHtml(
-                        value === null || value === undefined ? "-" : String(value)
+                        formatDisplayValue(value, valueMappingsRef.current[index]?.[key])
                       )}</td></tr>`;
                     })
                     .join("");
@@ -825,7 +830,7 @@ function MapView({
         anyLayer.getPopup?.()?.update();
       }
     }
-  }, [visibleFields, fieldAliases, activeFeature, featureDisplayMode]);
+  }, [visibleFields, fieldAliases, valueMappings, activeFeature, featureDisplayMode]);
 
   // Visual feedback: feature yang diklik mendapat strong highlight,
   // feature lain di layer yang sama mendapat subtle highlight,
