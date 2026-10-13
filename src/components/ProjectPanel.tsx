@@ -1,3 +1,4 @@
+import type { LayerValueMappings } from "../lib/valueMapping";
 import { useRef, useState } from "react";
 import LayerPreview from "./LayerPreview";
 import CategoryFieldPicker from "./CategoryFieldPicker";
@@ -54,6 +55,7 @@ export function isRasterLayer(layer: LayerInfo | undefined | null): boolean {
 }
 
 interface ProjectPanelProps {
+  valueMappings?: LayerValueMappings;
   projectPath: string | null;
   layers: LayerInfo[];
   hasProject: boolean;
@@ -84,6 +86,7 @@ interface ProjectPanelProps {
 type PanelTab = "layers" | "order";
 
 function ProjectPanel({
+  valueMappings,
   projectPath,
   layers,
   hasProject,
@@ -556,7 +559,9 @@ function ProjectPanel({
                                             }
                                             title={`Warna untuk ${cat.label}`}
                                           />
-                                          <span className="category-item-label">{cat.label}</span>
+                                          <span className="category-item-label">
+  {valueMappings?.[index]?.[layers[index]?.category_field ?? ""]?.[cat.value] ?? cat.label}
+</span>
                                         </div>
                                       );
                                     })}

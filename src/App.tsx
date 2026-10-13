@@ -492,6 +492,7 @@ function App() {
                   />
                 )}
                 <ProjectPanel
+              valueMappings={layerValueMappings}
                   projectPath={projectPath}
                   layers={layers}
                   hasProject={projectPath !== null}

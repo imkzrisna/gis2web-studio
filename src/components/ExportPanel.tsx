@@ -187,7 +187,7 @@ function ExportPanel({
           layer.categories && layer.categories.length > 0
             ? layer.categories.map((cat) => ({
                 value: cat.value,
-                label: cat.label,
+                label: layerValueMappings[index]?.[layer.category_field ?? ""]?.[cat.value] ?? cat.label,
                 color: categoryOverrides?.[cat.value] ?? cat.color,
               }))
             : null;
