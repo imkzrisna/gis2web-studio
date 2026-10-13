@@ -55,6 +55,8 @@ export function isRasterLayer(layer: LayerInfo | undefined | null): boolean {
 }
 
 interface ProjectPanelProps {
+  layerFlowStep?: "select" | "manage";
+  onLayerFlowStepChange?: (step: "select" | "manage") => void;
   valueMappings?: LayerValueMappings;
   projectPath: string | null;
   layers: LayerInfo[];
@@ -86,6 +88,8 @@ interface ProjectPanelProps {
 type PanelTab = "layers" | "order";
 
 function ProjectPanel({
+  layerFlowStep: layerFlowStepProp,
+  onLayerFlowStepChange,
   valueMappings,
   projectPath,
   layers,
@@ -115,7 +119,12 @@ function ProjectPanel({
 }: ProjectPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [panelTab, setPanelTab] = useState<PanelTab>("layers");
-  const [layerFlowStep, setLayerFlowStep] = useState<"select" | "manage">("select");
+  const [layerFlowStepLocal, setLayerFlowStepLocal] = useState<"select" | "manage">("select");
+  const layerFlowStep = layerFlowStepProp ?? layerFlowStepLocal;
+  function setLayerFlowStep(step: "select" | "manage") {
+    setLayerFlowStepLocal(step);
+    onLayerFlowStepChange?.(step);
+  }
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   // Index terakhir yang pernah di-hover, dipakai supaya LayerPreview tetap

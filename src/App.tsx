@@ -89,6 +89,7 @@ function App() {
   >({});
 
   const [layerValueMappings, setLayerValueMappings] = useState<LayerValueMappings>({});
+  const [layerFlowStep, setLayerFlowStep] = useState<"select" | "manage">("select");
 
   function handleValueMappingChange(
     layerIndex: number,
@@ -492,6 +493,8 @@ function App() {
                   />
                 )}
                 <ProjectPanel
+                layerFlowStep={layerFlowStep}
+                onLayerFlowStepChange={setLayerFlowStep}
               valueMappings={layerValueMappings}
                   projectPath={projectPath}
                   layers={layers}
