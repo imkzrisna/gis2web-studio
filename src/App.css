@@ -2581,13 +2581,50 @@ button {
   background: #fff;
 }
 
-.layer-rename-input {
+
+.layer-name-editor { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.layer-name-row { display: flex; align-items: flex-start; gap: 6px; }
+.layer-name-text { flex: 1; min-width: 0; word-break: break-word; cursor: text; }
+.layer-name-edit-btn,
+.layer-name-reset-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+}
+.layer-name-edit-btn:hover,
+.layer-name-reset-btn:hover { background: #e5e7eb; color: #111827; }
+.layer-name-input {
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 4px;
-  padding: 4px 6px;
-  font-size: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
   background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
+.layer-name-hint { font-size: 11px; color: #9ca3af; }
+.layer-name-original {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+.layer-name-original span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Samakan dengan editor alias di Feature Information: nama di kiri, pensil di kanan */
+.layer-name-row { align-items: center; justify-content: space-between; gap: 8px; }
+.layer-name-text { cursor: default; }
+.layer-name-edit-btn { width: 24px; height: 24px; color: #9ca3af; }
+.layer-name-edit-btn:hover { background: #f3f4f6; color: #374151; }

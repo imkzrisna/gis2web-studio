@@ -1,3 +1,4 @@
+import LayerNameEditor from "./LayerNameEditor";
 import type { LayerValueMappings } from "../lib/valueMapping";
 import { useRef, useState } from "react";
 import LayerPreview from "./LayerPreview";
@@ -434,20 +435,11 @@ function ProjectPanel({
                               onMouseLeave={cancelPreview}
                             >
                               <td>
-                                <input
-                                  type="text"
-                                  className="layer-rename-input"
-                                  key={`${index}:${layer.name}`}
-                                  defaultValue={layer.name}
-                                  placeholder={layerOriginalNames?.[index] ?? layer.name}
-                                  title={`Nama tampilan layer (asli: ${layerOriginalNames?.[index] ?? layer.name}). Kosongkan untuk kembali ke nama asli.`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onBlur={(e) => onLayerRename?.(index, e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                                  }}
+                                <LayerNameEditor
+                                  name={layer.name}
+                                  originalName={layerOriginalNames?.[index] ?? layer.name}
+                                  onRename={(n) => onLayerRename?.(index, n)}
                                 />
-                                {layer.name}
                                 {isBoundary && (
                                   <span className="layer-note layer-note--boundary"> (Boundary)</span>
                                 )}
