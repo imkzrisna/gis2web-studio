@@ -3332,13 +3332,11 @@ function renderAttributeTableRows() {{
   }}
 
   const theadHtml = '<thead><tr>' + fieldSet.map((f) => '<th>' + escapeHtml(f) + '</th>').join('') + '</tr></thead>';
-  const attrLayerCfg = CONFIG.layers.find((l) => l.layerIndex === attrSelectedLayerIndex);
-  const attrValueMaps = (attrLayerCfg && attrLayerCfg.valueMappings) || {{}};
   const tbodyRows = features.map((f, featureIndex) => {{
     const isActive = activeFeatureKey === (attrSelectedLayerIndex + ':' + featureIndex);
     const cells = fieldSet.map((field) => {{
       const v = f.properties ? f.properties[field] : undefined;
-      return '<td>' + escapeHtml(formatValue(v, attrValueMaps[field])) + '</td>';
+      return '<td>' + escapeHtml(v === null || v === undefined ? '-' : String(v)) + '</td>';
     }}).join('');
     return '<tr data-feature-index="' + featureIndex + '" class="' + (isActive ? 'active-row' : '') + '">' + cells + '</tr>';
   }}).join('');
