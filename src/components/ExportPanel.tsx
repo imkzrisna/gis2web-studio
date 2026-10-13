@@ -150,6 +150,7 @@ function ExportPanel({
   const [labelEdit, setLabelEdit] = useState(false);
   const [cropPath, setCropPath] = useState<string | null>(null);
 
+  const [fitZoom, setFitZoom] = useState<number | null>(null);
   const zoomError = exportConfig.maxZoom < exportConfig.minZoom;
 
   const canExport =
@@ -291,6 +292,11 @@ function ExportPanel({
             <span className="config-slider-bound">{ZOOM_MAX_LIMIT}</span>
           </div>
           <div className="config-slider-value">{exportConfig.minZoom}</div>
+          {fitZoom !== null && (
+            <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "center" }}>
+              Zoom pas boundary: {fitZoom}
+            </div>
+          )}
         </div>
 
         <div className="config-slider-block">
@@ -539,6 +545,7 @@ function ExportPanel({
           config={config}
           exportConfig={exportConfig}
           device={previewDevice}
+          onFitZoomChange={setFitZoom}
           labelEdit={labelEdit}
         />
         </div>

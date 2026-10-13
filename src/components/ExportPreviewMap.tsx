@@ -31,6 +31,7 @@ interface ExportPreviewMapProps {
   exportConfig: ExportConfig;
   device?: "desktop" | "mobile";
   labelEdit?: boolean;
+  onFitZoomChange?: (zoom: number | null) => void;
 }
 
 // Preview export murni dari CACHE (hasil prefetch saat import), tidak pernah
@@ -55,6 +56,7 @@ function ExportPreviewMap({
   exportConfig,
   device = "desktop",
   labelEdit = false,
+  onFitZoomChange,
 }: ExportPreviewMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -62,6 +64,8 @@ function ExportPreviewMap({
   const hiddenBoundaryRef = useRef<number | null>(null);
   const zoomRangeRef = useRef({ minZoom: exportConfig.minZoom, maxZoom: exportConfig.maxZoom });
   zoomRangeRef.current = { minZoom: exportConfig.minZoom, maxZoom: exportConfig.maxZoom };
+  const onFitZoomRef = useRef(onFitZoomChange);
+  onFitZoomRef.current = onFitZoomChange;
   const featureLayersRef = useRef<Map<string, L.Layer>>(new Map());
   const geojsonRef = useRef<Map<number, GeoJSON.FeatureCollection>>(new Map());
   const styleRef = useRef<Map<number, L.StyleFunction>>(new Map());
@@ -230,6 +234,15 @@ function ExportPreviewMap({
     if (allBounds.length > 0) {
       const combined = allBounds.reduce((acc, b) => acc.extend(b), allBounds[0]);
       map.fitBounds(combined, { padding: [16, 16] });
+      // Zoom pas boundary (tanpa terjepit batas slider) untuk tombol di ExportPanel.
+      const prevMin = map.options.minZoom;
+      const prevMax = map.options.maxZoom;
+      map.options.minZoom = 0;
+      map.options.maxZoom = 22;
+      const fitZ = map.getBoundsZoom(combined, false, L.point(16, 16));
+      map.options.minZoom = prevMin;
+      map.options.maxZoom = prevMax;
+      onFitZoomRef.current?.(Number.isFinite(fitZ) ? Math.floor(fitZ) : null);
     }
   }, [
     projectPath,
