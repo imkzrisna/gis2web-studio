@@ -562,6 +562,7 @@ function ExportPreviewMap({
       <div ref={containerRef} className="export-preview-map" />
       {exportConfig.showLegend && (
         <ExportPreviewLegend
+          valueMappings={layerValueMappings}
           layers={layers}
           indexes={[
             ...layerOrder.filter((i) => selectedLayerIndexes.includes(i) || i === boundaryLayerIndex),

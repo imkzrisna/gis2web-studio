@@ -1,3 +1,4 @@
+import type { LayerValueMappings } from "../lib/valueMapping";
 import { useState } from "react";
 import type { LayerInfo } from "./ProjectPanel";
 
@@ -8,6 +9,7 @@ interface ExportPreviewLegendProps {
   layerColors: Record<number, string>;
   layerCategoryColors: Record<number, Record<string, string>>;
   layerOpacities: Record<number, number>;
+  valueMappings?: LayerValueMappings;
 }
 
 function legendKind(geometryType: string | null | undefined) {
@@ -42,6 +44,7 @@ export default function ExportPreviewLegend({
   layerColors,
   layerCategoryColors,
   layerOpacities,
+  valueMappings,
 }: ExportPreviewLegendProps) {
   const [collapsed, setCollapsed] = useState(false);
   const items = indexes.filter((i) => layers[i]);
@@ -68,7 +71,9 @@ export default function ExportPreviewLegend({
             let entries: { label: string; color: string }[] | null = null;
             if (!isBoundary && (layer.category_field || layer.kind === "raster") && layer.categories && layer.categories.length > 0) {
               entries = layer.categories.map((c) => ({
-                label: c.label || (c.value === "NULL" ? "(kosong)" : c.value),
+                label:
+                  valueMappings?.[index]?.[layer.category_field ?? ""]?.[c.value] ??
+                  (c.label || (c.value === "NULL" ? "(kosong)" : c.value)),
                 color: overrides?.[c.value] ?? c.color,
               }));
             } else if (!isBoundary && layer.category_field && layer.ranges && layer.ranges.length > 0) {
