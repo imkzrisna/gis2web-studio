@@ -142,7 +142,7 @@ function ImportToolbar({
       if (result.length > 0) {
         setLabel(`Menyiapkan preview ${result.length} layer...`);
         for (const l of result) {
-          if (l.kind === "raster" && !l.issue && l.raster && !l.raster.has_color_table && l.raster.suggested_type === "single_band") {
+          if (l.kind === "raster" && !l.issue && !l.categories && l.raster && !l.raster.has_color_table && l.raster.suggested_type === "single_band") {
             l.categories = await fetchRasterClassCategories(l.datasource);
           }
         }

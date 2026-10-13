@@ -831,9 +831,130 @@ fn parse_layers(xml_content: &str) -> Result<Vec<LayerInfo>, String> {
     Ok(layers)
 }
 
+fn qattr(e: &quick_xml::events::BytesStart, key: &[u8]) -> Option<String> {
+    for a in e.attributes().flatten() {
+        if a.key.as_ref() == key {
+            return a.unescape_value().ok().map(|v| v.to_string());
+        }
+    }
+    None
+}
+
+fn normalize_class_value(raw: &str) -> String {
+    match raw.trim().parse::<f64>() {
+        Ok(v) if v.fract() == 0.0 && v.abs() < 1e15 => format!("{}", v as i64),
+        _ => raw.trim().to_string(),
+    }
+}
+
+// Warna kelas raster dari simbologi QGIS: renderer "paletted", atau
+// "singlebandpseudocolor" dengan ramp DISCRETE/EXACT. Kunci = nama layer.
+fn parse_raster_palettes(xml: &str) -> std::collections::HashMap<String, Vec<CategoryInfo>> {
+    let mut out = std::collections::HashMap::new();
+    let mut reader = Reader::from_str(xml);
+    let mut buf = Vec::new();
+    let mut is_raster = false;
+    let mut name: Option<String> = None;
+    let mut in_layername = false;
+    let mut renderer = String::new();
+    let mut ramp_ok = false;
+    let mut entries: Vec<CategoryInfo> = Vec::new();
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(e)) if e.name().as_ref() == b"layername" => {
+                in_layername = true;
+                let _ = e;
+            }
+            Ok(Event::Text(t)) if in_layername => {
+                if let Ok(s) = t.unescape() {
+                    name = Some(s.trim().to_string());
+                }
+            }
+            Ok(Event::End(e)) if e.name().as_ref() == b"layername" => {
+                in_layername = false;
+            }
+            Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
+                let n = e.name();
+                match n.as_ref() {
+                    b"maplayer" => {
+                        is_raster = qattr(&e, b"type").as_deref() == Some("raster");
+                        name = None;
+                        renderer.clear();
+                        ramp_ok = false;
+                        entries.clear();
+                    }
+                    b"rasterrenderer" if is_raster => {
+                        renderer = qattr(&e, b"type").unwrap_or_default();
+                        ramp_ok = renderer == "paletted";
+                    }
+                    b"colorrampshader" if is_raster => {
+                        let t = qattr(&e, b"colorRampType").unwrap_or_default();
+                        ramp_ok = renderer == "singlebandpseudocolor" && (t == "DISCRETE" || t == "EXACT");
+                    }
+                    b"paletteEntry" | b"item" if is_raster && ramp_ok => {
+                        let wanted = if n.as_ref() == b"paletteEntry" {
+                            renderer == "paletted"
+                        } else {
+                            renderer == "singlebandpseudocolor"
+                        };
+                        if wanted {
+                            if let (Some(v), Some(c)) = (qattr(&e, b"value"), qattr(&e, b"color")) {
+                                let value = normalize_class_value(&v);
+                                let label = qattr(&e, b"label").filter(|l| !l.is_empty()).unwrap_or_else(|| value.clone());
+                                entries.push(CategoryInfo { value, label, color: c.chars().take(7).collect() });
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            Ok(Event::End(e)) if e.name().as_ref() == b"maplayer" => {
+                if is_raster && ramp_ok && !entries.is_empty() {
+                    if let Some(n) = name.take() {
+                        out.insert(n, entries.clone());
+                    }
+                }
+                is_raster = false;
+            }
+            Ok(Event::Eof) | Err(_) => break,
+            _ => {}
+        }
+        buf.clear();
+    }
+    out
+}
+
+#[cfg(test)]
+mod palette_tests {
+    #[test]
+    fn reads_paletted_and_pseudocolor() {
+        let xml = r##"<qgis><maplayer type="raster"><layername>a</layername>
+<rasterrenderer type="paletted"><colorPalette>
+<paletteEntry value="1" alpha="255" color="#d7191c" label="K1"/>
+<paletteEntry value="2" alpha="255" color="#1a9641" label=""/>
+</colorPalette></rasterrenderer></maplayer>
+<maplayer type="raster"><layername>b</layername>
+<rasterrenderer type="singlebandpseudocolor"><rastershader><colorrampshader colorRampType="DISCRETE">
+<item value="3.0" alpha="255" color="#2b83ba" label="3"/>
+</colorrampshader></rastershader></rasterrenderer></maplayer>
+<maplayer type="raster"><layername>c</layername>
+<rasterrenderer type="singlebandpseudocolor"><rastershader><colorrampshader colorRampType="INTERPOLATED">
+<item value="1" alpha="255" color="#000000" label="1"/>
+</colorrampshader></rastershader></rasterrenderer></maplayer></qgis>"##;
+        let p = super::parse_raster_palettes(xml);
+        assert_eq!(p["a"].len(), 2);
+        assert_eq!(p["a"][0].color, "#d7191c");
+        assert_eq!(p["a"][1].label, "2");
+        assert_eq!(p["b"][0].value, "3");
+        assert!(!p.contains_key("c"));
+    }
+}
+
 #[tauri::command]
 fn parse_qgis_project(path: String) -> Result<Vec<LayerInfo>, String> {
     let project_dir = Path::new(&path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let palettes = parse_raster_palettes(&extract_qgs_content(&path).unwrap_or_default());
     let mut layers = parse_qgis_project_inner(path)?;
     let gdalinfo = resolve_gdal_bin("gdalinfo");
     for layer in layers.iter_mut() {
@@ -851,6 +972,9 @@ fn parse_qgis_project(path: String) -> Result<Vec<LayerInfo>, String> {
                 layer.datasource = found.to_string_lossy().to_string();
                 layer.crs = ds.crs.clone();
                 layer.raster = ds.raster.clone();
+                if let Some(p) = palettes.get(&layer.name) {
+                    layer.categories = Some(p.clone());
+                }
                 if ds.status == "error" {
                     layer.issue = Some(ds.messages.join(" "));
                 } else if ds.crs.is_none() {
