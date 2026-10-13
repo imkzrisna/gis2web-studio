@@ -35,6 +35,13 @@ interface MapViewProps {
 // Map utama tanpa batas zoom manual. Konstanta ini hanya membatasi animasi
 // fokus ke Boundary Layer agar tidak terbang terlalu dekat.
 const BOUNDARY_FOCUS_MAX_ZOOM = 18;
+// Bertahan saat MapView di-unmount (pindah menu), agar kembali ke Project tanpa animasi.
+let lastBoundaryFocus: {
+  projectPath: string | null;
+  index: number;
+  center: [number, number];
+  zoom: number;
+} | null = null;
 const BOUNDARY_FOCUS_MIN_ZOOM = 5;
 const MAIN_MAP_LABEL_FONT_SIZE = 13;
 
@@ -292,8 +299,8 @@ function MapView({
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, { zoomControl: false, doubleClickZoom: false }).setView(
-      [-2.5, 118],
-      5
+      lastBoundaryFocus ? lastBoundaryFocus.center : [-2.5, 118],
+      lastBoundaryFocus ? lastBoundaryFocus.zoom : 5
     );
     L.control.zoom({ position: "bottomright" }).addTo(map);
     dataLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -690,11 +697,34 @@ function MapView({
         if (boundaryGeoLayer && boundaryLayerIndex !== prevBoundaryLayerIndexRef.current) {
           const bounds = boundaryGeoLayer.getBounds();
           if (bounds.isValid()) {
-            activeMap.flyToBounds(bounds, {
-              maxZoom: BOUNDARY_FOCUS_MAX_ZOOM,
-              duration: 2.4,
-              easeLinearity: 0.08,
-            });
+            const sameAsLast =
+              lastBoundaryFocus !== null &&
+              lastBoundaryFocus.projectPath === projectPath &&
+              lastBoundaryFocus.index === boundaryLayerIndex;
+            const focusedIndex = boundaryLayerIndex as number;
+            const rememberView = () => {
+              const c = activeMap.getCenter();
+              lastBoundaryFocus = {
+                projectPath,
+                index: focusedIndex,
+                center: [c.lat, c.lng],
+                zoom: activeMap.getZoom(),
+              };
+            };
+            if (sameAsLast) {
+              activeMap.fitBounds(bounds, {
+                maxZoom: BOUNDARY_FOCUS_MAX_ZOOM,
+                animate: false,
+              });
+              rememberView();
+            } else {
+              activeMap.once("moveend", rememberView);
+              activeMap.flyToBounds(bounds, {
+                maxZoom: BOUNDARY_FOCUS_MAX_ZOOM,
+                duration: 2.4,
+                easeLinearity: 0.08,
+              });
+            }
           }
         }
         prevBoundaryLayerIndexRef.current = boundaryLayerIndex;
