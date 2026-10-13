@@ -2580,3 +2580,14 @@ button {
   border-radius: 6px;
   background: #fff;
 }
+
+.layer-rename-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+}

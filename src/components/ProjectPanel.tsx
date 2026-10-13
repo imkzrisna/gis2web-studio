@@ -55,6 +55,8 @@ export function isRasterLayer(layer: LayerInfo | undefined | null): boolean {
 }
 
 interface ProjectPanelProps {
+  onLayerRename?: (index: number, name: string) => void;
+  layerOriginalNames?: string[];
   layerFlowStep?: "select" | "manage";
   onLayerFlowStepChange?: (step: "select" | "manage") => void;
   valueMappings?: LayerValueMappings;
@@ -88,6 +90,8 @@ interface ProjectPanelProps {
 type PanelTab = "layers" | "order";
 
 function ProjectPanel({
+  onLayerRename,
+  layerOriginalNames,
   layerFlowStep: layerFlowStepProp,
   onLayerFlowStepChange,
   valueMappings,
@@ -430,6 +434,19 @@ function ProjectPanel({
                               onMouseLeave={cancelPreview}
                             >
                               <td>
+                                <input
+                                  type="text"
+                                  className="layer-rename-input"
+                                  key={`${index}:${layer.name}`}
+                                  defaultValue={layer.name}
+                                  placeholder={layerOriginalNames?.[index] ?? layer.name}
+                                  title={`Nama tampilan layer (asli: ${layerOriginalNames?.[index] ?? layer.name}). Kosongkan untuk kembali ke nama asli.`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onBlur={(e) => onLayerRename?.(index, e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                  }}
+                                />
                                 {layer.name}
                                 {isBoundary && (
                                   <span className="layer-note layer-note--boundary"> (Boundary)</span>

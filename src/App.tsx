@@ -1,6 +1,6 @@
 import type { LayerValueMappings } from "./lib/valueMapping";
 import { sanitizeLabelPositions, type LabelPositions } from "./lib/labelPositions";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SCALE_BAR_SEGMENTS_DEFAULT, clampScaleBarSegments } from "./lib/scaleBar";
 import "./App.css";
@@ -90,6 +90,21 @@ function App() {
 
   const [layerValueMappings, setLayerValueMappings] = useState<LayerValueMappings>({});
   const [layerFlowStep, setLayerFlowStep] = useState<"select" | "manage">("select");
+  const [layerDisplayNames, setLayerDisplayNames] = useState<Record<number, string>>({});
+  const displayLayers = useMemo(() => {
+    if (Object.keys(layerDisplayNames).length === 0) return layers;
+    return layers.map((l, i) => (layerDisplayNames[i] ? { ...l, name: layerDisplayNames[i] } : l));
+  }, [layers, layerDisplayNames]);
+
+  function handleLayerRename(index: number, name: string) {
+    const clean = name.trim();
+    setLayerDisplayNames((prev) => {
+      const next = { ...prev };
+      if (clean === "" || clean === layers[index]?.name) delete next[index];
+      else next[index] = clean;
+      return next;
+    });
+  }
 
   function handleValueMappingChange(
     layerIndex: number,
@@ -450,7 +465,7 @@ function App() {
               <div className="project-map-layout">
                 <MapView
                   projectPath={projectPath}
-                  layers={layers}
+                  layers={displayLayers}
                   selectedLayerIndexes={selectedLayerIndexes}
                   boundaryLayerIndex={boundaryLayerIndex}
                   config={config}
@@ -470,7 +485,7 @@ function App() {
                 />
                 <FeatureInfoCard
                   projectPath={projectPath}
-                  layers={layers}
+                  layers={displayLayers}
                   activeFeature={activeFeature}
                   onClose={() => setActiveFeature(null)}
                   onOpenFullTable={() => setAttributeTableCollapsed(false)}
@@ -484,7 +499,7 @@ function App() {
                 {!attributeTableCollapsed && (
                   <AttributeTablePanel
                     projectPath={projectPath}
-                    layers={layers}
+                    layers={displayLayers}
                     enabledLayerIndexes={enabledAttributeTableLayerIndexes}
                     activeFeature={activeFeature}
                     onFocusFeature={handleFocusFeature}
@@ -493,11 +508,13 @@ function App() {
                   />
                 )}
                 <ProjectPanel
+                onLayerRename={handleLayerRename}
+                layerOriginalNames={layers.map((l) => l.name)}
                 layerFlowStep={layerFlowStep}
                 onLayerFlowStepChange={setLayerFlowStep}
               valueMappings={layerValueMappings}
                   projectPath={projectPath}
-                  layers={layers}
+                  layers={displayLayers}
                   hasProject={projectPath !== null}
                   isImporting={isImporting}
                   importingLabel={importingLabel}
@@ -533,7 +550,7 @@ function App() {
           ) : activeMenu === "export" ? (
             <ExportPanel
               projectPath={projectPath}
-              layers={layers}
+              layers={displayLayers}
               selectedLayerIndexes={selectedLayerIndexes}
               boundaryLayerIndex={boundaryLayerIndex}
               layerColors={layerColors}
