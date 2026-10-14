@@ -24,6 +24,7 @@ interface ImportToolbarProps {
   onImportingLabelChange?: (label: string) => void;
   panelOpen?: boolean;
   onTogglePanel?: () => void;
+  onResetProject?: () => void;
 }
 
 type DialogStep = "choose" | "scanning" | "review";
@@ -62,6 +63,7 @@ function ImportToolbar({
   onBasemapCandidatesLoaded,
   panelOpen,
   onTogglePanel,
+  onResetProject,
   onGdalAvailabilityChecked,
   onImportingChange,
   onImportingLabelChange,
@@ -278,6 +280,7 @@ function ImportToolbar({
         onClick={() => {
           setError(null);
           if (projectPath && onTogglePanel) {
+            setMenuOpen(false);
             onTogglePanel();
           } else {
             setMenuOpen((v) => !v);
@@ -291,7 +294,7 @@ function ImportToolbar({
         {loading ? loadingLabel : "Import"}
       </button>
 
-      <div className={"import-pills" + (menuOpen ? " open" : "")} aria-hidden={!menuOpen}>
+      <div className={"import-pills" + (menuOpen ? " open" : "") + (projectPath ? " with-project" : "")} aria-hidden={!menuOpen}>
         <button
           type="button"
           className="import-pill"
@@ -322,6 +325,23 @@ function ImportToolbar({
         <span className="top-toolbar-path" title={shownPath}>
           {shownPath}
         </span>
+      )}
+
+      {projectPath && (
+        <button
+          type="button"
+          className={"import-reload-btn" + (menuOpen ? " open" : "")}
+          disabled={loading}
+          aria-label="Kembali ke awal"
+          aria-expanded={menuOpen}
+          title="Kembali ke awal"
+          onClick={() => onResetProject?.()}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 11-3-6.7" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </button>
       )}
 
       {error && <span className="top-toolbar-error">Error: {error}</span>}

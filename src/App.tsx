@@ -36,7 +36,7 @@ function enforceBoundaryAtBack(order: number[], boundaryIndex: number | null): n
   return [...withoutBoundary, boundaryIndex];
 }
 
-function App() {
+function App({ onReset }: { onReset?: () => void }) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>("project");
   const [layerPanelOpen, setLayerPanelOpen] = useState(true);
 
@@ -417,6 +417,7 @@ function App() {
               <ImportToolbar
                 panelOpen={layerPanelOpen}
                 onTogglePanel={() => setLayerPanelOpen((v) => !v)}
+                onResetProject={onReset}
                 projectPath={projectPath}
                 onProjectPathChange={setProjectPath}
                 onLayersLoaded={handleLayersLoaded}
@@ -546,4 +547,9 @@ function App() {
   );
 }
 
-export default App;
+function AppRoot() {
+  const [session, setSession] = useState(0);
+  return <App key={session} onReset={() => setSession((n) => n + 1)} />;
+}
+
+export default AppRoot;
