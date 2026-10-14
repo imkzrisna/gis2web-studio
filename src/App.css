@@ -3672,3 +3672,113 @@ button {
 .cfp-trigger.open .cfp-chevron {
   color: #fff;
 }
+
+/* Hapus garis aksen kiri yang terpotong; hover saja yang berwarna */
+.layer-overlay-panel .layer-table tbody tr td:first-child,
+.layer-overlay-panel .layer-table tbody tr.active-row td:first-child,
+.layer-overlay-panel .layer-table tbody tr:hover td:first-child {
+  box-shadow: none;
+  border-left: 0;
+}
+
+/* Tabel tidak memotong isi; sudut dibulatkan lewat sel */
+.layer-overlay-panel .layer-table { overflow: visible; }
+.layer-overlay-panel .layer-table tbody tr:last-child td:first-child { border-bottom-left-radius: 11px; }
+.layer-overlay-panel .layer-table tbody tr:last-child td:last-child { border-bottom-right-radius: 11px; }
+
+/* Hapus garis aksen kiri yang terpotong; hover saja yang berwarna */
+.layer-overlay-panel .layer-table tbody tr td:first-child,
+.layer-overlay-panel .layer-table tbody tr.active-row td:first-child,
+.layer-overlay-panel .layer-table tbody tr:hover td:first-child {
+  box-shadow: none;
+  border-left: 0;
+}
+
+/* Tabel tidak memotong isi; sudut dibulatkan lewat sel */
+.layer-overlay-panel .layer-table { overflow: visible; }
+.layer-overlay-panel .layer-table tbody tr:last-child td:first-child { border-bottom-left-radius: 11px; }
+.layer-overlay-panel .layer-table tbody tr:last-child td:last-child { border-bottom-right-radius: 11px; }
+
+/* ================= Latar hover penuh tanpa celah putih ================= */
+.layer-overlay-panel .layer-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Warna dipasang di baris, sel dibuat transparan agar tidak ada celah antar kolom */
+.layer-overlay-panel .layer-table tbody tr:hover,
+.layer-overlay-panel .layer-table tbody tr.active-row:hover {
+  background: #f3e9dc;
+}
+.layer-overlay-panel .layer-table tbody tr:hover > td,
+.layer-overlay-panel .layer-table tbody tr:hover > td:last-child,
+.layer-overlay-panel .layer-table tbody tr.active-row:hover > td,
+.layer-overlay-panel .layer-table tbody tr.active-row:hover > td:last-child {
+  background: transparent;
+}
+
+/* Baris biasa dan aktif (klik) tetap tanpa warna */
+.layer-overlay-panel .layer-table tbody tr:not(:hover),
+.layer-overlay-panel .layer-table tbody tr:not(:hover) > td {
+  background: transparent;
+}
+
+/* Sel terakhir (kolom Reset) memenuhi sisa lebar */
+.layer-overlay-panel .layer-table td:last-child,
+.layer-overlay-panel .layer-table th:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Wadah tabel: sudut membulat, isi tidak keluar */
+.layer-overlay-panel .layer-table-wrap,
+.layer-overlay-panel .layer-list { overflow-x: hidden; }
+
+/* ================= Latar hover: pasti sampai tepi kanan ================= */
+.layer-overlay-panel .layer-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+  overflow: hidden;
+}
+/* hilangkan sudut bulat sel yang membuat tepi kanan tampak terpotong */
+.layer-overlay-panel .layer-table td,
+.layer-overlay-panel .layer-table th {
+  border-radius: 0 !important;
+}
+/* sel terakhir melebar ke kanan lewat bayangan, tertutup oleh overflow tabel */
+.layer-overlay-panel .layer-table tbody tr:hover > td:last-child {
+  box-shadow: 40px 0 0 0 #f3e9dc;
+}
+/* wadah tabel memotong rapi dengan sudut membulat */
+.layer-overlay-panel .layer-table {
+  clip-path: inset(0 round 12px);
+}
+
+/* Teks (Boundary): cokelat, bukan biru */
+.layer-note--boundary,
+.layer-table .layer-note--boundary {
+  color: var(--walnut);
+  font-weight: 600;
+}
+
+/* ================= Tepi bawah rata (tanpa lekukan) ================= */
+.layer-overlay-panel .layer-table {
+  clip-path: none;
+  overflow: visible;
+  border-radius: 0;
+}
+.layer-overlay-panel .layer-table tbody tr:last-child td,
+.layer-overlay-panel .layer-table tbody tr:last-child td:first-child,
+.layer-overlay-panel .layer-table tbody tr:last-child td:last-child {
+  border-radius: 0 !important;
+}
+
+/* Garis bawah tipis, selebar tabel */
+.layer-overlay-panel .layer-table {
+  border-bottom: 1px solid var(--sand);
+}
+.layer-overlay-panel .layer-table tbody tr:last-child td {
+  border-bottom: 0;
+}
