@@ -2628,3 +2628,111 @@ button {
 .layer-name-text { cursor: default; }
 .layer-name-edit-btn { width: 24px; height: 24px; color: #9ca3af; }
 .layer-name-edit-btn:hover { background: #f3f4f6; color: #374151; }
+
+/* ================= Earthy Modern: tokens ================= */
+:root {
+  --espresso: #3e3028;
+  --walnut: #6f5140;
+  --caramel: #a67c52;
+  --ivory: #f7f3ed;
+  --sand: #d8c3a5;
+  --cocoa: #2c241f;
+}
+
+/* ================= Floating pill navigation ================= */
+.app-shell { position: relative; }
+
+.floating-nav {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1100;
+  display: flex;
+  gap: 12px;
+}
+
+.nav-pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 28px;
+  background: var(--walnut);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-pill:hover:not(.active):not(.nav-pill--brand) { background: var(--espresso); }
+
+.nav-pill.active {
+  background: #fff;
+  color: var(--walnut);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.nav-pill--brand { cursor: default; }
+
+/* Configuration & Export bukan peta: beri ruang agar tidak tertutup pill */
+.app-main:not(.app-main--full-bleed) { padding-top: 72px; }
+
+/* ================= Overlay di atas peta (tanpa strip toolbar) ================= */
+.top-toolbar {
+  position: absolute;
+  top: 68px;
+  left: 14px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  height: auto;
+}
+
+/* Tombol import lama -> tombol + bulat */
+.top-toolbar-import-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--walnut);
+  color: #fff;
+  font-size: 0;            /* sembunyikan teks & emoji lama */
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.top-toolbar-import-btn::before {
+  content: "+";
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+}
+.top-toolbar-import-btn:hover:not(:disabled) { background: var(--espresso); }
+
+/* Path & error tampil sebagai pill putih kecil */
+.top-toolbar-path,
+.top-toolbar-error {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  box-shadow: var(--shadow-sm);
+}
+.top-toolbar-path { color: var(--walnut); max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Brand pill: tanpa garis bawah */
+.nav-pill--brand { text-decoration: none; }

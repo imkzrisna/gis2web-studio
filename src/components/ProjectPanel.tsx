@@ -186,6 +186,9 @@ function ProjectPanel({
     setDragIndex(null);
   }
 
+  // Panel (termasuk tombol ☰) hanya muncul setelah project/data diimpor
+  if (!hasProject && !isImporting) return null;
+
   return (
     <div className={"layer-overlay-panel" + (collapsed ? " collapsed" : " expanded")}>
       {collapsed ? (
