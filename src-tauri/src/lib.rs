@@ -2781,7 +2781,7 @@ fn build_app_js(config_json: &str) -> String {
     format!(
         r#"const CONFIG = {config_json};
 
-const map = L.map('map', {{ zoomControl: false, doubleClickZoom: false, minZoom: CONFIG.minZoom, maxZoom: CONFIG.maxZoom }});
+const map = L.map('map', {{ zoomControl: false, doubleClickZoom: false, minZoom: 0, maxZoom: CONFIG.maxZoom }});
 L.control.zoom({{ position: 'bottomright' }}).addTo(map);
 
 const FocusBoundaryControl = L.Control.extend({{
@@ -2808,11 +2808,7 @@ const FocusBoundaryControl = L.Control.extend({{
       const mapEl = map.getContainer();
       mapEl.classList.add('map-flying');
       map.once('moveend', function () {{ mapEl.classList.remove('map-flying'); }});
-      if (map.getBoundsZoom(bounds) < CONFIG.minZoom) {{
-        map.flyTo(bounds.getCenter(), CONFIG.minZoom, {{ duration: 1.6 }});
-      }} else {{
-        map.flyToBounds(bounds, {{ maxZoom: CONFIG.maxZoom, duration: 1.6 }});
-      }}
+      map.flyToBounds(bounds, {{ maxZoom: CONFIG.maxZoom, duration: 1.6 }});
     }});
     return container;
   }},
@@ -2843,6 +2839,7 @@ function applyMapScale() {{
   el.style.height = vh + 'px';
   el.style.transform = '';
   el.style.setProperty('--inv', '1');
+  map.setMinZoom(0);
   map.invalidateSize({{ animate: false }});
   let sc = 1;
   if (scaleBounds && scaleBounds.isValid()) {{
@@ -2860,6 +2857,7 @@ function applyMapScale() {{
   }}
   document.body.style.overflow = 'hidden';
   map.invalidateSize({{ animate: false }});
+  map.setMinZoom(Math.min(CONFIG.minZoom, CONFIG.maxZoom));
 }}
 function fitScaled(bounds) {{
   scaleBounds = bounds;
@@ -2929,7 +2927,7 @@ if (CONFIG.showScaleBar !== false) {{
 function addBasemap() {{
   L.tileLayer(CONFIG.basemap.url, {{
     attribution: CONFIG.basemap.attribution,
-    minZoom: CONFIG.minZoom,
+    minZoom: 0,
     maxZoom: CONFIG.maxZoom,
     updateWhenIdle: true,
     keepBuffer: 2,
@@ -3623,7 +3621,7 @@ function loadRasterLayer(layer) {{
     bounds: bounds,
     minNativeZoom: layer.minNativeZoom,
     maxNativeZoom: layer.maxNativeZoom,
-    minZoom: CONFIG.minZoom,
+    minZoom: 0,
     maxZoom: CONFIG.maxZoom,
     opacity: layer.opacity == null ? 1 : layer.opacity,
     className: layer.pixelated ? 'raster-pixelated' : '',
