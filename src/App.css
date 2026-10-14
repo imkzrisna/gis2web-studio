@@ -3782,3 +3782,16 @@ button {
 .layer-overlay-panel .layer-table tbody tr:last-child td {
   border-bottom: 0;
 }
+
+/* ================= Garis bawah tabel: satu lapis, tipis, halus ================= */
+.layer-overlay-panel .layer-table,
+.layer-overlay-panel .layer-table tbody,
+.layer-overlay-panel .layer-table tbody tr:last-child,
+.layer-overlay-panel .layer-table tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+/* Satu garis tipis dengan warna sand yang diperhalus */
+.layer-overlay-panel .layer-table {
+  box-shadow: 0 1px 0 rgba(216, 195, 165, 0.55);
+}
