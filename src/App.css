@@ -3341,3 +3341,105 @@ button {
   color: inherit;
 }
 .layer-table tbody tr.active-row .layer-note { opacity: 0.7; }
+
+/* ================= Atur layer terpilih: minimalis earthy ================= */
+.layer-flow-back-btn {
+  background: transparent;
+  border: 0;
+  padding: 4px 8px 4px 0;
+  color: var(--walnut);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.layer-flow-back-btn:hover { color: var(--espresso); transform: translateX(-2px); }
+
+.layer-manage-heading { align-items: center; margin: 6px 0 10px; }
+.layer-manage-heading h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--walnut);
+  margin: 0;
+}
+
+/* Tombol reset: pill outline, hover terbalik */
+.layer-reset-btn {
+  background: transparent;
+  color: var(--walnut);
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.layer-reset-btn:hover:not(:disabled) {
+  background: var(--walnut);
+  color: #fff;
+  border-color: var(--walnut);
+}
+
+/* Slider opacity / ukuran */
+.layer-overlay-panel input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--sand);
+  outline: none;
+}
+.layer-overlay-panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--walnut);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(44, 36, 31, 0.3);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.layer-overlay-panel input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+/* Pemilih warna */
+.layer-overlay-panel input[type="color"] {
+  border: 1px solid var(--sand);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* Ikon pensil rename */
+.layer-overlay-panel .layer-table button:not(.layer-reset-btn) { color: var(--walnut); }
+
+/* ================= Baris layer: warna hanya saat hover, bukan saat klik ================= */
+.layer-table tbody tr.active-row,
+.layer-table tbody tr.active-row td {
+  background: transparent;
+  color: inherit;
+}
+.layer-table tbody tr.active-row td:first-child { box-shadow: none; }
+
+.layer-table tbody tr,
+.layer-table tbody tr td {
+  transition: background-color 0.18s ease;
+}
+.layer-table tbody tr:hover,
+.layer-table tbody tr:hover td,
+.layer-table tbody tr.active-row:hover,
+.layer-table tbody tr.active-row:hover td {
+  background: #f3e9dc;
+  color: var(--espresso);
+}
+
+/* Slider yang bertumpuk: beri jarak agar rapi */
+.layer-overlay-panel .layer-table td { vertical-align: middle; }
+.layer-overlay-panel .layer-table td input[type="range"] { width: 100%; min-width: 90px; }
+.layer-overlay-panel .layer-table td > * + input[type="range"],
+.layer-overlay-panel .layer-table td > div + div { margin-top: 8px; }
