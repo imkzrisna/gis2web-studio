@@ -690,7 +690,7 @@ function ProjectPanel({
         </div>
       )}
 
-      {lastPreviewIndex !== null && projectPath && layers[lastPreviewIndex] && layers[lastPreviewIndex].kind !== "raster" && (
+      {lastPreviewIndex !== null && projectPath && layers[lastPreviewIndex] && (
         <LayerPreview
           projectPath={projectPath}
           datasource={layers[lastPreviewIndex].datasource}

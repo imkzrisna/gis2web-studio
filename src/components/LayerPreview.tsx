@@ -3,6 +3,15 @@ import L from "leaflet";
 import { getCachedGeojson, fetchLayerGeojson } from "../lib/layerGeojsonCache";
 import { styleForLayer, resolveFeatureColor, computeLabeledFeatureIndexes } from "../lib/layerStyle";
 import type { LayerInfo } from "./ProjectPanel";
+import {
+  prepareRasterPreview,
+  rasterClassColors,
+  rasterTileUrl,
+  type RasterTilesResult,
+} from "../lib/rasterTiles";
+
+// Cache hasil tile raster per layer + kombinasi warna (hover berikutnya instan)
+const rasterPreviewCache = new Map<string, RasterTilesResult>();
 
 function escapeHtml(value: string): string {
   return value
@@ -37,6 +46,7 @@ function LayerPreview({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const vectorLayerRef = useRef<L.GeoJSON | null>(null);
+  const rasterLayerRef = useRef<L.TileLayer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +79,11 @@ function LayerPreview({
   // membuat map baru), lalu re-style per-feature memakai logic yang sama
   // dengan map utama (resolveFeatureColor + styleForLayer).
   useEffect(() => {
+    if (layer.kind === "raster") return;
+    if (rasterLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(rasterLayerRef.current);
+      rasterLayerRef.current = null;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -157,6 +172,63 @@ function LayerPreview({
       cancelled = true;
     };
   }, [projectPath, datasource, layer, fallbackColor, categoryColorOverrides]);
+
+  useEffect(() => {
+    if (layer.kind !== "raster") return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const colors = rasterClassColors(layer, categoryColorOverrides);
+    const key = `${layer.datasource}|${JSON.stringify(colors)}`;
+    const categorical = colors.length > 0 || !!layer.raster?.has_color_table;
+
+    function show(result: RasterTilesResult) {
+      const map = mapRef.current;
+      if (cancelled || !map) return;
+      if (vectorLayerRef.current) {
+        map.removeLayer(vectorLayerRef.current);
+        vectorLayerRef.current = null;
+      }
+      if (rasterLayerRef.current) {
+        map.removeLayer(rasterLayerRef.current);
+        rasterLayerRef.current = null;
+      }
+      const tl = L.tileLayer(rasterTileUrl(result), {
+        minZoom: result.min_zoom,
+        maxNativeZoom: result.max_zoom,
+        maxZoom: 22,
+        className: categorical ? "raster-pixelated" : "",
+      }).addTo(map);
+      rasterLayerRef.current = tl;
+      map.fitBounds(
+        [[result.south, result.west], [result.north, result.east]],
+        { padding: [12, 12] }
+      );
+      setLoading(false);
+    }
+
+    const cached = rasterPreviewCache.get(key);
+    if (cached) {
+      show(cached);
+    } else {
+      prepareRasterPreview(layer, colors)
+        .then((result) => {
+          rasterPreviewCache.set(key, result);
+          show(result);
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setError(String(err));
+            setLoading(false);
+          }
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer, categoryColorOverrides]);
 
   return (
     <div className={"layer-preview-thumb" + (visible ? " layer-preview-thumb--visible" : "")}>
