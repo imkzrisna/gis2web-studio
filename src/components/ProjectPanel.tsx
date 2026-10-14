@@ -64,6 +64,8 @@ interface ProjectPanelProps {
   projectPath: string | null;
   layers: LayerInfo[];
   hasProject: boolean;
+  panelOpen?: boolean;
+  onPanelOpenChange?: (open: boolean) => void;
   isImporting: boolean;
   importingLabel?: string;
   selectedLayerIndexes: number[];
@@ -99,6 +101,8 @@ function ProjectPanel({
   projectPath,
   layers,
   hasProject,
+  panelOpen,
+  onPanelOpenChange,
   isImporting,
   importingLabel,
   selectedLayerIndexes,
@@ -122,7 +126,10 @@ function ProjectPanel({
   onFocusLayer,
   onLayerCategoryFieldChange,
 }: ProjectPanelProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [innerCollapsed, setInnerCollapsed] = useState(false);
+  const collapsed = panelOpen === undefined ? innerCollapsed : !panelOpen;
+  const setCollapsed = (v: boolean) =>
+    onPanelOpenChange ? onPanelOpenChange(!v) : setInnerCollapsed(v);
   const [panelTab, setPanelTab] = useState<PanelTab>("layers");
   const [layerFlowStepLocal, setLayerFlowStepLocal] = useState<"select" | "manage">("select");
   const layerFlowStep = layerFlowStepProp ?? layerFlowStepLocal;
@@ -191,16 +198,7 @@ function ProjectPanel({
 
   return (
     <div className={"layer-overlay-panel" + (collapsed ? " collapsed" : " expanded")}>
-      {collapsed ? (
-        <button
-          type="button"
-          className="layer-overlay-toggle-btn layer-overlay-toggle-btn--collapsed"
-          onClick={() => setCollapsed(false)}
-          title="Buka panel layer"
-        >
-          {"\u2630"}
-        </button>
-      ) : (
+      {collapsed ? null : (
         <div className="layer-overlay-header">
           <span className="layer-overlay-title">
             <span className="layer-overlay-title-icon">

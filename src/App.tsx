@@ -38,6 +38,7 @@ function enforceBoundaryAtBack(order: number[], boundaryIndex: number | null): n
 
 function App() {
   const [activeMenu, setActiveMenu] = useState<MenuKey>("project");
+  const [layerPanelOpen, setLayerPanelOpen] = useState(true);
 
   const [projectPath, setProjectPath] = useState<string | null>(null);
   const [layers, setLayers] = useState<LayerInfo[]>([]);
@@ -414,6 +415,8 @@ function App() {
           {activeMenu === "project" ? (
             <div className="project-view">
               <ImportToolbar
+                panelOpen={layerPanelOpen}
+                onTogglePanel={() => setLayerPanelOpen((v) => !v)}
                 projectPath={projectPath}
                 onProjectPathChange={setProjectPath}
                 onLayersLoaded={handleLayersLoaded}
@@ -470,6 +473,8 @@ function App() {
                   />
                 )}
                 <ProjectPanel
+                panelOpen={layerPanelOpen}
+                onPanelOpenChange={setLayerPanelOpen}
                 onLayerRename={handleLayerRename}
                 layerOriginalNames={layers.map((l) => l.name)}
                 layerFlowStep={layerFlowStep}

@@ -3013,3 +3013,26 @@ button {
   }
   .import-spinner { animation-duration: 1.6s; }
 }
+
+/* ================= Tombol ☰ (setelah project dimuat) ================= */
+.top-toolbar-import-btn.is-menu::before {
+  content: "";
+  width: 18px;
+  height: 14px;
+  background:
+    linear-gradient(#fff 0 0) top / 100% 3px no-repeat,
+    linear-gradient(#fff 0 0) center / 100% 3px no-repeat,
+    linear-gradient(#fff 0 0) bottom / 100% 3px no-repeat;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.top-toolbar-import-btn.is-menu:active:not(:disabled)::before { transform: scaleX(0.85); }
+.top-toolbar-import-btn.is-menu[aria-expanded="false"] { background: var(--walnut); }
+.top-toolbar-import-btn.is-menu:hover:not(:disabled) { background: var(--espresso); }
+
+/* Panel layer turun di bawah pill navigasi dan tombol ☰ */
+.layer-overlay-panel {
+  top: 124px;
+  left: 14px;
+  max-height: calc(100% - 140px);
+}

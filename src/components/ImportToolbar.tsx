@@ -22,6 +22,8 @@ interface ImportToolbarProps {
   onGdalAvailabilityChecked?: (available: boolean) => void;
   onImportingChange?: (importing: boolean) => void;
   onImportingLabelChange?: (label: string) => void;
+  panelOpen?: boolean;
+  onTogglePanel?: () => void;
 }
 
 type DialogStep = "choose" | "scanning" | "review";
@@ -58,6 +60,8 @@ function ImportToolbar({
   onSelectedLayerIndexesChange,
   onBoundaryLayerIndexChange,
   onBasemapCandidatesLoaded,
+  panelOpen,
+  onTogglePanel,
   onGdalAvailabilityChecked,
   onImportingChange,
   onImportingLabelChange,
@@ -266,15 +270,23 @@ function ImportToolbar({
     <div className="top-toolbar" ref={toolbarRef}>
       <button
         type="button"
-        className={"top-toolbar-import-btn" + (menuOpen ? " open" : "")}
+        className={
+          "top-toolbar-import-btn" +
+          (projectPath ? " is-menu" : "") +
+          (!projectPath && menuOpen ? " open" : "")
+        }
         onClick={() => {
           setError(null);
-          setMenuOpen((v) => !v);
+          if (projectPath && onTogglePanel) {
+            onTogglePanel();
+          } else {
+            setMenuOpen((v) => !v);
+          }
         }}
         disabled={loading}
         aria-label="Import data"
-        aria-expanded={menuOpen}
-        title={loading ? loadingLabel : "Import data"}
+        aria-expanded={projectPath ? !!panelOpen : menuOpen}
+        title={loading ? loadingLabel : projectPath ? "Panel layer" : "Import data"}
       >
         {loading ? loadingLabel : "Import"}
       </button>
