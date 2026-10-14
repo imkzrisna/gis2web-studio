@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import type { LayerInfo } from "./ProjectPanel";
@@ -68,6 +68,24 @@ function ImportToolbar({
   const [sourceLabel, setSourceLabel] = useState<string | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!toolbarRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
   const [step, setStep] = useState<DialogStep>("choose");
   const [scan, setScan] = useState<FolderScanResult | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -170,6 +188,7 @@ function ImportToolbar({
     const selected = await open({ directory: true, multiple: false });
     if (!selected || Array.isArray(selected)) return;
 
+    setDialogOpen(true);
     setStep("scanning");
     try {
       const result = await scanGisFolder(selected);
@@ -244,18 +263,48 @@ function ImportToolbar({
   const shownPath = sourceLabel ?? projectPath;
 
   return (
-    <div className="top-toolbar">
+    <div className="top-toolbar" ref={toolbarRef}>
       <button
         type="button"
-        className="top-toolbar-import-btn"
+        className={"top-toolbar-import-btn" + (menuOpen ? " open" : "")}
         onClick={() => {
           setError(null);
-          setDialogOpen(true);
+          setMenuOpen((v) => !v);
         }}
         disabled={loading}
+        aria-label="Import data"
+        aria-expanded={menuOpen}
+        title={loading ? loadingLabel : "Import data"}
       >
-        {loading ? loadingLabel : "\u{1F4C1} Import Data GIS"}
+        {loading ? loadingLabel : "Import"}
       </button>
+
+      <div className={"import-pills" + (menuOpen ? " open" : "")} aria-hidden={!menuOpen}>
+        <button
+          type="button"
+          className="import-pill"
+          tabIndex={menuOpen ? 0 : -1}
+          disabled={loading}
+          onClick={() => {
+            setMenuOpen(false);
+            handleImportQgis();
+          }}
+        >
+          Import Project QGIS
+        </button>
+        <button
+          type="button"
+          className="import-pill"
+          tabIndex={menuOpen ? 0 : -1}
+          disabled={loading}
+          onClick={() => {
+            setMenuOpen(false);
+            handlePickFolder();
+          }}
+        >
+          Import Folder Data GIS
+        </button>
+      </div>
 
       {shownPath && (
         <span className="top-toolbar-path" title={shownPath}>

@@ -2736,3 +2736,280 @@ button {
 
 /* Brand pill: tanpa garis bawah */
 .nav-pill--brand { text-decoration: none; }
+
+/* ================= Menu import: tombol + dan pill ================= */
+.top-toolbar { position: absolute; }
+
+/* Tombol + : berputar jadi × saat terbuka */
+.top-toolbar-import-btn {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.top-toolbar-import-btn::before {
+  color: inherit;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.top-toolbar-import-btn:active:not(:disabled) { transform: scale(0.94); }
+.top-toolbar-import-btn.open,
+.top-toolbar-import-btn.open:hover:not(:disabled) {
+  background: #fff;
+  color: var(--walnut);
+}
+.top-toolbar-import-btn.open::before { transform: rotate(45deg); }
+
+/* Wadah pill: tidak memengaruhi layout, melayang di sebelah tombol + */
+.import-pills {
+  position: absolute;
+  top: 0;
+  left: 54px;
+  display: flex;
+  gap: 16px;
+  pointer-events: none;
+}
+.import-pills.open { pointer-events: auto; }
+
+.import-pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 30px;
+  background: #fff;
+  color: var(--walnut);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+
+  /* keadaan tertutup */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-14px) scale(0.92);
+  transform-origin: left center;
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s ease,
+    visibility 0s linear 0.22s,
+    background-color 0.15s ease;
+}
+
+/* keadaan terbuka: muncul berurutan (stagger) dengan sedikit pantulan */
+.import-pills.open .import-pill {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0s,
+    background-color 0.15s ease;
+}
+.import-pills.open .import-pill:nth-child(1) { transition-delay: 0.03s; }
+.import-pills.open .import-pill:nth-child(2) { transition-delay: 0.10s; }
+
+.import-pill:hover:not(:disabled) { background: var(--ivory); }
+.import-pill:active:not(:disabled) { transform: scale(0.97); }
+.import-pill:disabled { opacity: 0.5; cursor: not-allowed; }
+.import-pill:focus-visible,
+.top-toolbar-import-btn:focus-visible {
+  outline: 2px solid var(--caramel);
+  outline-offset: 2px;
+}
+
+/* Path file disembunyikan sementara menu terbuka agar tidak tumpang tindih */
+.top-toolbar-path { transition: opacity 0.15s ease; }
+.import-pills.open ~ .top-toolbar-path { opacity: 0; }
+
+/* Hormati pengguna yang mematikan animasi */
+@media (prefers-reduced-motion: reduce) {
+  .import-pill,
+  .import-pills.open .import-pill,
+  .top-toolbar-import-btn::before { transition-duration: 0.01s; transition-delay: 0s; }
+}
+
+/* ================= Hover: warna terbalik (putih/cokelat -> cokelat/putih) ================= */
+.import-pill {
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s ease,
+    visibility 0s linear 0.22s,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.import-pills.open .import-pill {
+  transition:
+    opacity 0.22s ease,
+    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0s,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.import-pill:hover:not(:disabled),
+.import-pill:focus-visible:not(:disabled) {
+  background: var(--walnut);
+  color: #fff;
+}
+
+/* Tombol + saat menu terbuka (putih) -> cokelat saat di-hover */
+.top-toolbar-import-btn.open:hover:not(:disabled) {
+  background: var(--walnut);
+  color: #fff;
+}
+
+/* ================= Dialog import: gaya Earthy Modern ================= */
+@keyframes imp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes imp-pop-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes imp-row-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes imp-spin { to { transform: rotate(360deg); } }
+
+.import-overlay {
+  background: rgba(44, 36, 31, 0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: imp-fade-in 0.22s ease both;
+}
+
+.import-dialog {
+  background: var(--ivory);
+  border: 1px solid var(--sand);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(44, 36, 31, 0.28);
+  color: var(--cocoa);
+  animation: imp-pop-in 0.36s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.import-dialog-header h2 { color: var(--espresso); font-weight: 600; }
+.import-dialog-sub { color: var(--walnut); opacity: 0.85; }
+
+/* Tombol tutup */
+.import-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--walnut);
+  opacity: 1;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.25s ease;
+}
+.import-close-btn:hover { background: var(--walnut); color: #fff; transform: rotate(90deg); }
+
+/* Daftar hasil pemindaian */
+.import-scan-row {
+  background: #fff;
+  border: 1px solid var(--sand);
+  border-radius: 18px;
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+              box-shadow 0.18s ease, transform 0.18s ease;
+  animation: imp-row-in 0.38s ease both;
+}
+.import-scan-row:nth-child(1) { animation-delay: 0.10s; }
+.import-scan-row:nth-child(2) { animation-delay: 0.17s; }
+.import-scan-row:nth-child(3) { animation-delay: 0.24s; }
+.import-scan-row:nth-child(4) { animation-delay: 0.31s; }
+.import-scan-row:nth-child(n+5) { animation-delay: 0.36s; }
+
+.import-scan-row:hover:not(.import-scan-row--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(44, 36, 31, 0.10);
+  border-color: var(--caramel);
+}
+.import-scan-row:has(input:checked) {
+  background: #fffaf3;
+  border-color: var(--caramel);
+}
+.import-scan-row input[type="checkbox"] {
+  accent-color: var(--walnut);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+.import-scan-title { color: var(--espresso); }
+.import-scan-meta { color: var(--cocoa); }
+.import-scan-file { color: var(--walnut); opacity: 0.8; }
+
+/* Badge status: tetap semantik, nada lebih hangat */
+.import-badge { border-radius: 999px; font-weight: 600; }
+.import-badge--ok      { background: #e8f1df; color: #3f6b2a; }
+.import-badge--warning { background: #f6e7c8; color: #8a5a12; }
+.import-badge--error   { background: #f3d9d4; color: #a23a2c; }
+.import-scan-msg { color: #8a5a12; }
+.import-scan-msg--error { color: #a23a2c; }
+
+/* Footer dan tombol */
+.import-dialog-footer { gap: 12px; }
+
+.import-card-btn,
+.import-footer-primary {
+  background: var(--walnut);
+  color: #fff;
+  border: 1px solid var(--walnut);
+  border-radius: 999px;
+  padding: 11px 26px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  filter: none;
+  transition: background-color 0.18s ease, color 0.18s ease,
+              transform 0.15s ease, box-shadow 0.18s ease;
+}
+.import-card-btn:hover:not(:disabled),
+.import-footer-primary:hover:not(:disabled) {
+  background: #fff;
+  color: var(--walnut);
+  filter: none;
+  box-shadow: var(--shadow-md);
+}
+.import-card-btn:active:not(:disabled),
+.import-footer-primary:active:not(:disabled) { transform: scale(0.97); }
+
+.import-secondary-btn {
+  background: transparent;
+  color: var(--walnut);
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  padding: 11px 26px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, transform 0.15s ease;
+}
+.import-secondary-btn:hover { background: var(--walnut); color: #fff; border-color: var(--walnut); }
+.import-secondary-btn:active { transform: scale(0.97); }
+
+.import-card-btn:focus-visible,
+.import-secondary-btn:focus-visible,
+.import-close-btn:focus-visible {
+  outline: 2px solid var(--caramel);
+  outline-offset: 2px;
+}
+
+/* Peringatan, pesan kosong, error */
+.import-warning { background: #f6e7c8; color: #8a5a12; border-radius: 12px; }
+.import-error   { color: #a23a2c; }
+
+/* Loading */
+.import-scanning { color: var(--walnut); animation: imp-fade-in 0.25s ease both; }
+.import-spinner {
+  border: 3px solid var(--sand);
+  border-top-color: var(--walnut);
+  border-radius: 50%;
+  animation: imp-spin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .import-overlay, .import-dialog, .import-scan-row, .import-scanning {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+  .import-spinner { animation-duration: 1.6s; }
+}
