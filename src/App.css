@@ -3321,3 +3321,23 @@ button {
 .top-toolbar-import-btn.is-menu[aria-expanded="true"] ~ .import-reload-btn {
   display: none;
 }
+
+/* ================= Baris layer aktif/hover: krem + cokelat ================= */
+.layer-table tbody tr:hover,
+.layer-table tbody tr:hover td {
+  background: #f8f1e7;
+}
+
+.layer-table tbody tr.active-row,
+.layer-table tbody tr.active-row td {
+  background: #f3e9dc;
+  color: var(--espresso);
+}
+.layer-table tbody tr.active-row td:first-child {
+  box-shadow: inset 3px 0 0 var(--caramel);
+}
+.layer-table tbody tr.active-row td *,
+.layer-table tbody tr.active-row .layer-note {
+  color: inherit;
+}
+.layer-table tbody tr.active-row .layer-note { opacity: 0.7; }
