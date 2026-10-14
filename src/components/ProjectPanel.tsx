@@ -271,11 +271,6 @@ function ProjectPanel({
 
                 {panelTab === "layers" && layerFlowStep === "select" && (
                   <>
-                    <h3>Pilih Layer ({layers.length})</h3>
-                    <p className="order-hint">
-                      Centang layer yang ingin dipublikasikan, lalu tandai salah satu
-                      sebagai Boundary Layer (khusus layer polygon).
-                    </p>
                     <input
                       type="search"
                       className="layer-search-input"
@@ -290,10 +285,10 @@ function ProjectPanel({
                     <table className="layer-table layer-table--select">
                       <thead>
                         <tr>
-                          <th>Publikasikan</th>
+                          <th>Web Display</th>
                           <th>Boundary</th>
                           <th>Nama Layer</th>
-                          <th>Tipe Geometri</th>
+                          <th>Tipe</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -363,17 +358,6 @@ function ProjectPanel({
                           : "(belum dipilih)"}
                       </p>
                     </div>
-
-                    {boundaryLayerIndex !== null && (
-                      <button
-                        type="button"
-                        className="layer-reset-btn"
-                        onClick={() => onBoundaryLayerIndexChange(null)}
-                        title="Tidak memakai Boundary Layer"
-                      >
-                        Tanpa boundary
-                      </button>
-                    )}
 
                     <button
                       type="button"

@@ -3036,3 +3036,180 @@ button {
   left: 14px;
   max-height: calc(100% - 140px);
 }
+
+/* ================= Panel layer: sesuai referensi ================= */
+
+/* Hapus lingkaran putih (panel kosong saat tertutup) */
+.layer-overlay-panel.collapsed { display: none; }
+
+/* Panel di sebelah kanan tombol ☰ */
+.layer-overlay-panel {
+  top: 68px;
+  left: 66px;
+  max-height: calc(100% - 84px);
+  background: #fafafa;
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  transform-origin: top left;
+  animation: panel-in 0.28s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(-10px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+.layer-overlay-header {
+  border-bottom: 2px solid #c9c4c0;
+}
+.layer-overlay-title { color: var(--walnut); font-weight: 500; }
+.layer-overlay-title-icon { color: var(--walnut); }
+
+/* Tombol tutup: bulat abu-abu */
+.layer-overlay-toggle-btn {
+  background: #e4e2e0;
+  border: 0;
+  color: #6b6560;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.layer-overlay-toggle-btn:hover {
+  background: var(--walnut);
+  color: #fff;
+}
+
+/* Tombol ☰ saat panel terbuka: putih dengan garis cokelat */
+.top-toolbar-import-btn.is-menu[aria-expanded="true"] {
+  background: #fff;
+}
+.top-toolbar-import-btn.is-menu[aria-expanded="true"]::before {
+  background:
+    linear-gradient(var(--walnut) 0 0) top / 100% 3px no-repeat,
+    linear-gradient(var(--walnut) 0 0) center / 100% 3px no-repeat,
+    linear-gradient(var(--walnut) 0 0) bottom / 100% 3px no-repeat;
+}
+.top-toolbar-import-btn.is-menu[aria-expanded="true"]:hover:not(:disabled) {
+  background: var(--ivory);
+}
+
+/* Path file disembunyikan saat panel terbuka agar tidak tertimpa */
+.top-toolbar-import-btn.is-menu[aria-expanded="true"] ~ .top-toolbar-path {
+  display: none;
+}
+
+/* Kolom pencarian */
+.layer-overlay-panel input[type="text"],
+.layer-overlay-panel input[type="search"] {
+  border-radius: 999px;
+  border: 1px solid #b9b3ae;
+  background: #fafafa;
+}
+.layer-overlay-panel input[type="text"]:focus,
+.layer-overlay-panel input[type="search"]:focus {
+  outline: 2px solid var(--caramel);
+  outline-offset: 1px;
+}
+
+/* Checkbox: kotak kosong -> terisi penuh (tanpa tanda centang) */
+.layer-overlay-panel input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 1.5px solid #9a948f;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+.layer-overlay-panel input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--walnut);
+}
+.layer-overlay-panel input[type="checkbox"]:checked {
+  background: #9c8a7e;
+  border-color: #9c8a7e;
+}
+.layer-overlay-panel input[type="checkbox"]:active:not(:disabled) { transform: scale(0.92); }
+
+/* Radio Boundary: lingkaran, terisi saat dipilih */
+.layer-overlay-panel input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 1.5px solid #9a948f;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.layer-overlay-panel input[type="radio"]:hover:not(:disabled) { border-color: var(--walnut); }
+.layer-overlay-panel input[type="radio"]:checked {
+  background: #9c8a7e;
+  border-color: #9c8a7e;
+}
+.layer-overlay-panel input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.layer-overlay-panel input[type="checkbox"]:focus-visible,
+.layer-overlay-panel input[type="radio"]:focus-visible {
+  outline: 2px solid var(--caramel);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer-overlay-panel { animation-duration: 0.01s; }
+}
+
+/* ================= Panel layer: ringkas & proporsional ================= */
+.layer-overlay-panel {
+  width: 340px;
+  max-width: calc(100vw - 100px);
+  font-size: 13px;
+}
+
+/* Header lebih tipis */
+.layer-overlay-header { padding: 10px 14px; }
+.layer-overlay-title { font-size: 15px; gap: 8px; }
+.layer-overlay-title-icon svg { width: 18px; height: 18px; }
+.layer-overlay-toggle-btn { width: 28px; height: 28px; font-size: 13px; }
+
+.layer-overlay-body { padding: 12px 14px 14px; }
+
+/* Tab Layers/Urutan disembunyikan (urutan diatur di bagian lain) */
+.project-panel-tabs { display: none; }
+
+/* Kolom pencarian */
+.layer-overlay-panel input[type="text"],
+.layer-overlay-panel input[type="search"] {
+  padding: 7px 14px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+/* Tabel layer */
+.layer-overlay-panel table { font-size: 13px; }
+.layer-overlay-panel th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #8a837d;
+  padding: 8px 6px;
+}
+.layer-overlay-panel td { padding: 8px 6px; }
+
+/* Checkbox & radio lebih kecil */
+.layer-overlay-panel input[type="checkbox"],
+.layer-overlay-panel input[type="radio"] {
+  width: 18px;
+  height: 18px;
+}
+.layer-overlay-panel input[type="checkbox"] { border-radius: 5px; }
+
+/* Ringkasan & tombol bawah */
+.layer-overlay-panel .layer-list button { font-size: 13px; }
+.layer-overlay-panel .layer-list > button:last-child,
+.layer-overlay-panel .layer-list button[class*="primary"] {
+  padding: 9px 14px;
+  border-radius: 999px;
+}
