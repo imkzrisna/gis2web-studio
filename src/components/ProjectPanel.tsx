@@ -138,6 +138,7 @@ function ProjectPanel({
     onLayerFlowStepChange?.(step);
   }
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ pos: number; after: boolean } | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   // Index terakhir yang pernah di-hover, dipakai supaya LayerPreview tetap
   // mounted (map Leaflet tidak dibuat ulang) walau hover sedang tidak aktif;
@@ -177,21 +178,38 @@ function ProjectPanel({
     setDragIndex(pos);
   }
 
-  function handleDragOver(e: React.DragEvent) {
+  function handleDragOver(e: React.DragEvent, pos: number, locked: boolean) {
     e.preventDefault();
+    if (dragIndex === null || locked) {
+      setDropTarget(null);
+      return;
+    }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+    setDropTarget((prev) =>
+      prev && prev.pos === pos && prev.after === after ? prev : { pos, after }
+    );
   }
 
-  function handleDrop(pos: number) {
-    if (dragIndex === null || dragIndex === pos) {
-      setDragIndex(null);
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDropTarget(null);
+  }
+
+  function handleDrop() {
+    if (dragIndex === null || !dropTarget) {
+      handleDragEnd();
       return;
     }
     const newOrder = [...layerOrder];
     const [moved] = newOrder.splice(dragIndex, 1);
-    newOrder.splice(pos, 0, moved);
+    let at = dropTarget.pos + (dropTarget.after ? 1 : 0);
+    if (dragIndex < at) at -= 1;
+    newOrder.splice(at, 0, moved);
     onLayerOrderChange(newOrder);
-    setDragIndex(null);
+    handleDragEnd();
   }
+
 
   // Panel (termasuk tombol ☰) hanya muncul setelah project/data diimpor
   if (!hasProject && !isImporting) return null;
@@ -626,12 +644,11 @@ function ProjectPanel({
                   </>
                 )}
 
-                {panelTab === "order" && (
+                {panelTab === "layers" && layerFlowStep === "manage" && (
                   <>
-                    <h3>Urutan Tumpukan Layer</h3>
+                    <h3 className="order-heading">Urutan Tumpukan</h3>
                     <p className="order-hint">
-                      Tarik untuk mengatur layer mana yang tampil paling depan (atas)
-                      atau paling belakang (bawah) di peta.
+                      Tarik untuk mengubah urutan. Paling atas tampil paling depan di peta.
                     </p>
                     <div className="order-list">
                       {layerOrder
@@ -650,17 +667,32 @@ function ProjectPanel({
                             className={
                               "order-list-item" +
                               (dragIndex === pos ? " dragging" : "") +
+                              (dropTarget && dropTarget.pos === pos && dragIndex !== null && dragIndex !== pos
+                                ? dropTarget.after ? " drop-after" : " drop-before"
+                                : "") +
                               (isBoundary ? " order-list-item--locked" : "")
                             }
                             draggable={!isBoundary}
-                            onDragStart={() => !isBoundary && handleDragStart(pos)}
-                            onDragOver={handleDragOver}
-                            onDrop={() => handleDrop(pos)}
+                            onDragStart={(e) => {
+                              if (isBoundary) return;
+                              e.dataTransfer.effectAllowed = "move";
+                              handleDragStart(pos);
+                            }}
+                            onDragOver={(e) => handleDragOver(e, pos, isBoundary)}
+                            onDragEnd={handleDragEnd}
+                            onDrop={handleDrop}
                             onMouseEnter={() => scheduleShowPreview(layerIdx)}
                             onMouseLeave={cancelPreview}
                           >
                             <span className="order-drag-handle">
-                              {isBoundary ? "\uD83D\uDD12" : "\u2630"}
+                              {isBoundary ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Terkunci">
+                                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                                  <path d="M8 11V8a4 4 0 018 0v3" />
+                                </svg>
+                              ) : (
+                                "\u22EE\u22EE"
+                              )}
                             </span>
                             <span
                               className="order-color-dot"
