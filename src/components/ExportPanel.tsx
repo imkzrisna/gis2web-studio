@@ -545,7 +545,13 @@ function ExportPanel({
           config={config}
           exportConfig={exportConfig}
           device={previewDevice}
-          onFitZoomChange={setFitZoom}
+          onFitZoomChange={(z) => {
+            setFitZoom(z);
+            onExportConfigChange({
+              ...exportConfig,
+              minZoom: Math.min(Math.max(z, ZOOM_MIN_LIMIT), exportConfig.maxZoom),
+            });
+          }}
           labelEdit={labelEdit}
         />
         </div>

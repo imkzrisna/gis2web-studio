@@ -31,12 +31,26 @@ interface ExportPreviewMapProps {
   exportConfig: ExportConfig;
   device?: "desktop" | "mobile";
   labelEdit?: boolean;
-  onFitZoomChange?: (zoom: number | null) => void;
+  onFitZoomChange?: (zoom: number) => void;
 }
 
 // Preview export murni dari CACHE (hasil prefetch saat import), tidak pernah
 // memanggil invoke/ogr2ogr, tidak menulis file apa pun. Layer yang belum ada
 // di cache (gagal prefetch) di-skip diam-diam, bukan memicu fetch baru.
+// Fit dengan batas zoom dibuka sementara agar tidak terjepit Min/Max lama.
+// Mengembalikan zoom hasil fit.
+function fitOpen(map: L.Map, bounds: L.LatLngBounds): number | null {
+  const prevMin = map.options.minZoom;
+  const prevMax = map.options.maxZoom;
+  map.options.minZoom = 0;
+  map.options.maxZoom = 22;
+  map.fitBounds(bounds, { padding: [16, 16], animate: false });
+  const z = map.getZoom();
+  map.options.minZoom = prevMin;
+  map.options.maxZoom = prevMax;
+  return Number.isFinite(z) ? Math.floor(z) : null;
+}
+
 function ExportPreviewMap({
   projectPath,
   layers,
@@ -66,6 +80,8 @@ function ExportPreviewMap({
   zoomRangeRef.current = { minZoom: exportConfig.minZoom, maxZoom: exportConfig.maxZoom };
   const onFitZoomRef = useRef(onFitZoomChange);
   onFitZoomRef.current = onFitZoomChange;
+  const combinedBoundsRef = useRef<L.LatLngBounds | null>(null);
+  const lastFitKeyRef = useRef<string | null>(null);
   const featureLayersRef = useRef<Map<string, L.Layer>>(new Map());
   const geojsonRef = useRef<Map<number, GeoJSON.FeatureCollection>>(new Map());
   const styleRef = useRef<Map<number, L.StyleFunction>>(new Map());
@@ -233,16 +249,14 @@ function ExportPreviewMap({
 
     if (allBounds.length > 0) {
       const combined = allBounds.reduce((acc, b) => acc.extend(b), allBounds[0]);
-      map.fitBounds(combined, { padding: [16, 16] });
-      // Zoom pas boundary (tanpa terjepit batas slider) untuk tombol di ExportPanel.
-      const prevMin = map.options.minZoom;
-      const prevMax = map.options.maxZoom;
-      map.options.minZoom = 0;
-      map.options.maxZoom = 22;
-      const fitZ = map.getBoundsZoom(combined, false, L.point(16, 16));
-      map.options.minZoom = prevMin;
-      map.options.maxZoom = prevMax;
-      onFitZoomRef.current?.(Number.isFinite(fitZ) ? Math.floor(fitZ) : null);
+      combinedBoundsRef.current = combined;
+      const z = fitOpen(map, combined);
+      // Minimum Zoom otomatis hanya saat bounds berubah (bukan saat warna/opacity).
+      const fitKey = `${projectPath}|${combined.toBBoxString()}`;
+      if (lastFitKeyRef.current !== fitKey) {
+        lastFitKeyRef.current = fitKey;
+        if (z !== null) onFitZoomRef.current?.(z);
+      }
     }
   }, [
     projectPath,
@@ -525,34 +539,15 @@ function ExportPreviewMap({
     };
   }, []);
 
-  // Batas zoom Preview. Saat Minimum Zoom berubah, peta bergerak (maju atau
-  // mundur) ke level Minimum Zoom baru dengan animasi; durasi mengikuti jarak.
-  // Saat Maximum Zoom berubah, peta hanya dijepit bila melewati batas.
-  const prevMinZoomRef = useRef<number | null>(null);
-
+  // Min/Max Zoom hanya membatasi rentang zoom; Leaflet menjepit zoom saat ini.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-
     const { minZoom, maxZoom } = exportConfig;
-    map.setMinZoom(minZoom);
+    if (maxZoom < minZoom) return;
     map.setMaxZoom(maxZoom);
-
-    const minChanged = prevMinZoomRef.current !== null && prevMinZoomRef.current !== minZoom;
-    prevMinZoomRef.current = minZoom;
-
-    const timeout = window.setTimeout(() => {
-      const currentZoom = map.getZoom();
-      const target = minChanged
-        ? minZoom
-        : Math.min(maxZoom, Math.max(minZoom, currentZoom));
-      if (target === currentZoom) return;
-      const duration = Math.min(2.5, Math.max(0.5, 0.4 + 0.12 * Math.abs(target - currentZoom)));
-      map.flyTo(map.getCenter(), target, { duration });
-    }, 250);
-
-    return () => window.clearTimeout(timeout);
-  }, [exportConfig.minZoom, exportConfig.maxZoom, projectPath]);
+    map.setMinZoom(minZoom);
+  }, [exportConfig.minZoom, exportConfig.maxZoom]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -565,8 +560,17 @@ function ExportPreviewMap({
     };
   }, [exportConfig.showScaleBar, exportConfig.scaleBarSegments]);
 
+  // Ganti device (container berubah ukuran): fit ulang dan perbarui Minimum Zoom.
   useEffect(() => {
-    const t = window.setTimeout(() => mapRef.current?.invalidateSize(), 50);
+    const t = window.setTimeout(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.invalidateSize({ animate: false });
+      const b = combinedBoundsRef.current;
+      if (!b || !b.isValid()) return;
+      const z = fitOpen(map, b);
+      void z; // Minimum Zoom tidak diubah saat ganti device
+    }, 200);
     return () => window.clearTimeout(t);
   }, [device]);
 

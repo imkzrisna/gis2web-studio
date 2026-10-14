@@ -2819,6 +2819,60 @@ const FocusBoundaryControl = L.Control.extend({{
 }});
 new FocusBoundaryControl({{ position: 'bottomright' }}).addTo(map);
 
+// Layar sempit: peta dirender lebih lebar lalu diperkecil (transform), sehingga
+// Minimum Zoom tetap CONFIG.minZoom dengan komposisi boundary mirip desktop.
+(function () {{
+  const st = document.createElement('style');
+  st.textContent =
+    '#map{{transform-origin:0 0}}' +
+    '#map .leaflet-top.leaflet-left{{transform-origin:0 0;transform:scale(var(--inv,1))}}' +
+    '#map .leaflet-top.leaflet-right{{transform-origin:100% 0;transform:scale(var(--inv,1))}}' +
+    '#map .leaflet-bottom.leaflet-left{{transform-origin:0 100%;transform:scale(var(--inv,1))}}' +
+    '#map .leaflet-bottom.leaflet-right{{transform-origin:100% 100%;transform:scale(var(--inv,1))}}';
+  document.head.appendChild(st);
+}})();
+
+let scaleBounds = null;
+let lastScaleWidth = 0;
+function applyMapScale() {{
+  const el = document.getElementById('map');
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  lastScaleWidth = vw;
+  el.style.width = vw + 'px';
+  el.style.height = vh + 'px';
+  el.style.transform = '';
+  el.style.setProperty('--inv', '1');
+  map.invalidateSize({{ animate: false }});
+  let sc = 1;
+  if (scaleBounds && scaleBounds.isValid()) {{
+    const snap = map.options.zoomSnap;
+    map.options.zoomSnap = 0;
+    const fz = map.getBoundsZoom(scaleBounds);
+    map.options.zoomSnap = snap;
+    if (Number.isFinite(fz)) sc = Math.min(1, Math.pow(2, fz - CONFIG.minZoom) * 0.97);
+  }}
+  if (sc < 1) {{
+    el.style.width = (vw / sc) + 'px';
+    el.style.height = (vh / sc) + 'px';
+    el.style.transform = 'scale(' + sc + ')';
+    el.style.setProperty('--inv', String(1 / sc));
+  }}
+  document.body.style.overflow = 'hidden';
+  map.invalidateSize({{ animate: false }});
+}}
+function fitScaled(bounds) {{
+  scaleBounds = bounds;
+  applyMapScale();
+  map.fitBounds(bounds);
+}}
+window.addEventListener('resize', function () {{
+  if (!scaleBounds) return;
+  if (Math.abs(document.documentElement.clientWidth - lastScaleWidth) < 40) return;
+  applyMapScale();
+  map.fitBounds(scaleBounds);
+}});
+
 if (CONFIG.showScaleBar !== false) {{
   const SB_SWAP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>';
   const FixedScale = L.Control.Scale.extend({{
@@ -3576,10 +3630,10 @@ function loadRasterLayer(layer) {{
   }}).addTo(map);
   layerRefs[layer.layerIndex] = tl;
   if (layer.isFocus) {{
-    map.fitBounds(bounds);
+    fitScaled(bounds);
     boundaryFitted = true;
   }} else if (!boundaryFitted) {{
-    map.fitBounds(bounds);
+    fitScaled(bounds);
   }}
   return Promise.resolve();
 }}
@@ -3649,10 +3703,10 @@ function loadLayer(layer) {{
       layerRefs[layer.layerIndex] = gLayer;
 
       if (layer.isFocus) {{
-        map.fitBounds(gLayer.getBounds());
+        fitScaled(gLayer.getBounds());
         boundaryFitted = true;
       }} else if (!boundaryFitted) {{
-        map.fitBounds(gLayer.getBounds());
+        fitScaled(gLayer.getBounds());
       }}
     }})
     .catch((err) => console.error('Gagal memuat layer:', layer.file, err));
