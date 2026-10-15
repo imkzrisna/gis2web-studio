@@ -17,6 +17,7 @@ import ConfigurationPanel, {
   LABEL_FONT_SIZE_MAX,
 } from "./components/ConfigurationPanel";
 import ExportPanel from "./components/ExportPanel";
+import BasemapSwitcher from "./components/BasemapSwitcher";
 import AttributeTablePanel from "./components/AttributeTablePanel";
 import FeatureInfoCard from "./components/FeatureInfoCard";
 import { getCachedGeojson } from "./lib/layerGeojsonCache";
@@ -154,7 +155,7 @@ function App({ onReset }: { onReset?: () => void }) {
     exportLogoPath: null,
     exportLogoCrop: null,
   });
-  const [basemapCandidates, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
+  const [, setBasemapCandidates] = useState<BasemapCandidateInfo[]>([]);
   const [labelPositions, setLabelPositions] = useState<LabelPositions>({});
 
   // Pengaturan (config + exportConfig) disimpan di samping file .qgz
@@ -428,6 +429,7 @@ function App({ onReset }: { onReset?: () => void }) {
                 onImportingChange={setIsImporting}
                 onImportingLabelChange={setImportingLabel}
               />
+              <BasemapSwitcher config={config} onConfigChange={setConfig} />
               <div className="project-map-layout">
                 <MapView
                   projectPath={projectPath}
@@ -512,7 +514,6 @@ function App({ onReset }: { onReset?: () => void }) {
             <ConfigurationPanel
               config={config}
               onConfigChange={setConfig}
-              basemapCandidates={basemapCandidates}
               gdalAvailable={gdalAvailable}
             />
           ) : activeMenu === "export" ? (
