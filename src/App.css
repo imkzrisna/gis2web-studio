@@ -4478,3 +4478,16 @@ button {
 .browser-strip.light .export-tab-mockup-icon,
 .browser-strip.light .export-tab-mockup-close { color: #5f6368 !important; }
 .browser-strip.light .browser-theme-btn { background: rgba(0, 0, 0, 0.08) !important; color: #202124 !important; }
+
+/* Perbaikan klik cepat: hit area tombol tidak boleh berubah saat ditekan */
+.browser-theme-btn {
+  top: calc(50% - 14px) !important;
+  transform: none !important;
+  transition: background-color 0.18s ease !important;
+}
+.browser-theme-btn:active { transform: none !important; }
+.browser-theme-btn svg {
+  pointer-events: none;
+  transition: transform 0.15s ease;
+}
+.browser-theme-btn:active svg { transform: scale(0.85); }
