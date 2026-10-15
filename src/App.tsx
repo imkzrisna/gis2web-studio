@@ -23,11 +23,10 @@ import FeatureInfoCard from "./components/FeatureInfoCard";
 import { getCachedGeojson } from "./lib/layerGeojsonCache";
 import { buildCategories } from "./lib/autoCategories";
 
-type MenuKey = "project" | "configuration" | "export";
+type MenuKey = "project" | "export";
 
 const MENU_ITEMS: { key: MenuKey; label: string }[] = [
   { key: "project", label: "Project" },
-  { key: "configuration", label: "Configuration" },
   { key: "export", label: "Export" },
 ];
 
@@ -510,12 +509,6 @@ function App({ onReset }: { onReset?: () => void }) {
                 />
               </div>
             </div>
-          ) : activeMenu === "configuration" ? (
-            <ConfigurationPanel
-              config={config}
-              onConfigChange={setConfig}
-              gdalAvailable={gdalAvailable}
-            />
           ) : activeMenu === "export" ? (
             <ExportPanel
               projectPath={projectPath}
