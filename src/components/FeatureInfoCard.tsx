@@ -23,6 +23,16 @@ interface FeatureInfoCardProps {
   ) => void;
 }
 
+function prettifyName(raw: string): string {
+  return raw
+    .replace(/[_\-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w === w.toUpperCase() ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+    .join(" ");
+}
+
 function FeatureInfoCard({
   projectPath,
   layers,
@@ -104,6 +114,7 @@ function FeatureInfoCard({
 
   const [mappingOpen, setMappingOpen] = useState(false);
   const [mappingField, setMappingField] = useState("");
+  const [mapSelOpen, setMapSelOpen] = useState(false);
   const mappingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -170,6 +181,10 @@ function FeatureInfoCard({
     onVisibleFieldsChange(layerIndex, []);
   }
 
+  function selectAllFields() {
+    onVisibleFieldsChange(layerIndex, null);
+  }
+
   function startEditAlias(field: string) {
     if (!activeFields.includes(field)) return;
     editCancelledRef.current = false;
@@ -217,17 +232,34 @@ function FeatureInfoCard({
                   <div className="feature-info-card-column-popover-header">
                     <span>Pemetaan nilai</span>
                   </div>
-                  <select
-                    className="feature-info-card-mapping-select"
-                    value={activeMappingField}
-                    onChange={(e) => setMappingField(e.target.value)}
-                  >
-                    {allFields.map((f) => (
-                      <option key={f} value={f}>
-                        {layerAliases[f] || f}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="fic-select">
+                    <button
+                      type="button"
+                      className={"fic-select-trigger" + (mapSelOpen ? " open" : "")}
+                      onClick={() => setMapSelOpen((v) => !v)}
+                    >
+                      <span>{layerAliases[activeMappingField] || activeMappingField}</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+                    {mapSelOpen && (
+                      <ul className="fic-select-list">
+                        {allFields.map((f) => (
+                          <li
+                            key={f}
+                            className={"fic-select-item" + (f === activeMappingField ? " selected" : "")}
+                            onClick={() => {
+                              setMappingField(f);
+                              setMapSelOpen(false);
+                            }}
+                          >
+                            {layerAliases[f] || f}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <div className="feature-info-card-column-list">
                     {mappingValues.values.length === 0 ? (
                       <div className="feature-info-card-column-empty">Tidak ada nilai.</div>
@@ -280,14 +312,18 @@ function FeatureInfoCard({
               {columnPickerOpen && (
                 <div className="feature-info-card-column-popover">
                   <div className="feature-info-card-column-popover-header">
-                    <span>Pilih kolom</span>
-                    <button
-                      type="button"
-                      className="feature-info-card-column-reset"
-                      onClick={clearAllFields}
-                    >
-                      Kosongkan semua
-                    </button>
+                    <span>
+                      Pilih kolom{" "}
+                      <em className="fic-count">{activeFields.length}/{allFields.length}</em>
+                    </span>
+                    <div className="fic-head-actions">
+                      <button type="button" className="feature-info-card-column-reset" onClick={selectAllFields}>
+                        Pilih semua
+                      </button>
+                      <button type="button" className="feature-info-card-column-reset" onClick={clearAllFields}>
+                        Kosongkan
+                      </button>
+                    </div>
                   </div>
                   {showColumnSearch && (
                     <div className="feature-info-card-column-search">
@@ -320,29 +356,7 @@ function FeatureInfoCard({
                             checked={activeFields.includes(field)}
                             onChange={() => toggleField(field)}
                           />
-                          {editingField === field ? (
-                            <input
-                              type="text"
-                              className="feature-info-card-alias-input"
-                              autoFocus
-                              value={editDraft}
-                              placeholder={field}
-                              onFocus={(e) => e.currentTarget.select()}
-                              onChange={(e) => setEditDraft(e.target.value)}
-                              onBlur={() => commitEditAlias(field)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  commitEditAlias(field);
-                                } else if (e.key === "Escape") {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  cancelEditAlias();
-                                }
-                              }}
-                            />
-                          ) : (
-                            <span
+                          <span
                               className="feature-info-card-column-name"
                             >
                               {layerAliases[field] ? (
@@ -358,11 +372,10 @@ function FeatureInfoCard({
                                 field
                               )}
                             </span>
-                          )}
-                          {editingField !== field && activeFields.includes(field) && (
+                          {activeFields.includes(field) && (
                             <button
                               type="button"
-                              className="feature-info-card-alias-edit-btn"
+                              className={"feature-info-card-alias-edit-btn" + (layerAliases[field] ? " has-alias" : "") + (editingField === field ? " editing" : "")}
                               title="Ubah alias"
                               aria-label={`Ubah alias ${field}`}
                               onClick={() => startEditAlias(field)}
@@ -377,6 +390,45 @@ function FeatureInfoCard({
                       ))
                     )}
                   </div>
+                  {editingField && (
+                    <div className="fic-alias-pop">
+                      <div className="fic-alias-title">Ubah nama tampilan</div>
+                      <div className="fic-alias-orig">
+                        Kolom asli: <code>{editingField}</code>
+                      </div>
+                      <input
+                        type="text"
+                        className="fic-alias-input"
+                        autoFocus
+                        value={editDraft}
+                        placeholder={prettifyName(editingField)}
+                        onFocus={(e) => e.currentTarget.select()}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            commitEditAlias(editingField);
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            cancelEditAlias();
+                          }
+                        }}
+                      />
+                      <div className="fic-alias-actions">
+                        <button type="button" className="fic-btn fic-btn--ghost" onClick={() => setEditDraft(prettifyName(editingField))}>
+                          Rapikan
+                        </button>
+                        <span className="fic-spacer" />
+                        <button type="button" className="fic-btn fic-btn--ghost" onClick={cancelEditAlias}>
+                          Batal
+                        </button>
+                        <button type="button" className="fic-btn fic-btn--primary" onClick={() => commitEditAlias(editingField)}>
+                          Simpan
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div className="feature-info-card-column-hint">
                     {editingField
                       ? "Enter = simpan \u00b7 Esc = batal"

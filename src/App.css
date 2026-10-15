@@ -3875,3 +3875,173 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .basemap-menu, .basemap-menu.open { transition-duration: 0.01s; }
 }
+
+/* ================= Popover kolom & pemetaan nilai: earthy ================= */
+@keyframes fic-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+
+.feature-info-card-column-popover {
+  background: var(--ivory);
+  border: 1px solid var(--sand);
+  border-radius: 16px;
+  box-shadow: 0 14px 36px rgba(44, 36, 31, 0.22);
+  transform-origin: top right;
+  animation: fic-in 0.18s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+.feature-info-card-column-popover-header {
+  color: var(--walnut);
+  border-bottom: 1px solid var(--sand);
+  font-weight: 600;
+}
+.fic-count {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 1px 8px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: #f3e9dc;
+  color: var(--walnut);
+}
+.fic-head-actions { display: inline-flex; gap: 10px; }
+.feature-info-card-column-reset { color: var(--walnut); font-weight: 500; transition: color 0.15s ease; }
+.feature-info-card-column-reset:hover { color: var(--espresso); text-decoration: underline; }
+
+.feature-info-card-column-search {
+  border-bottom: 1px solid var(--sand);
+  color: var(--walnut);
+}
+.feature-info-card-column-search input { background: transparent; color: var(--cocoa); }
+
+.feature-info-card-column-item { transition: background-color 0.15s ease; border-radius: 10px; }
+.feature-info-card-column-item:hover { background: #f3e9dc; }
+
+/* Checkbox cokelat (kosong -> terisi) */
+.feature-info-card-column-item input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  border: 1.5px solid #9a948f;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.feature-info-card-column-item input[type="checkbox"]:hover { border-color: var(--walnut); }
+.feature-info-card-column-item input[type="checkbox"]:checked {
+  background: var(--walnut);
+  border-color: var(--walnut);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E");
+  background-size: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.feature-info-card-column-name-original { color: #8a837d; }
+.feature-info-card-column-hint { color: #8a837d; border-top: 1px solid var(--sand); }
+
+/* Tombol pensil + penanda alias */
+.feature-info-card-alias-edit-btn { position: relative; color: var(--walnut); }
+.feature-info-card-alias-edit-btn:hover,
+.feature-info-card-alias-edit-btn.editing { background: var(--walnut); color: #fff; }
+.feature-info-card-alias-edit-btn.has-alias::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--caramel);
+}
+
+/* Kartu mini ubah alias */
+.fic-alias-pop {
+  margin: 8px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--sand);
+  border-radius: 14px;
+  animation: fic-in 0.18s ease both;
+}
+.fic-alias-title { font-size: 12px; font-weight: 600; color: var(--walnut); margin-bottom: 4px; }
+.fic-alias-orig { font-size: 11px; color: #8a837d; margin-bottom: 8px; }
+.fic-alias-orig code { color: var(--walnut); background: #f3e9dc; padding: 1px 6px; border-radius: 6px; }
+.fic-alias-input,
+.feature-info-card-alias-input {
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cocoa);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.fic-alias-input:focus,
+.feature-info-card-alias-input:focus {
+  border-color: var(--caramel);
+  box-shadow: 0 0 0 3px rgba(166, 124, 82, 0.2);
+}
+.fic-alias-actions { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.fic-spacer { flex: 1; }
+.fic-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--sand);
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.fic-btn--ghost { background: transparent; color: var(--walnut); }
+.fic-btn--ghost:hover { background: #f3e9dc; }
+.fic-btn--primary { background: var(--walnut); color: #fff; border-color: var(--walnut); }
+.fic-btn--primary:hover { background: #fff; color: var(--walnut); }
+
+/* Dropdown kustom pemetaan nilai */
+.fic-select { margin: 8px 12px; }
+.fic-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--walnut);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.fic-select-trigger svg { transition: transform 0.22s ease; }
+.fic-select-trigger:hover,
+.fic-select-trigger.open { background: var(--walnut); color: #fff; border-color: var(--walnut); }
+.fic-select-trigger.open svg { transform: rotate(180deg); }
+.fic-select-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--sand);
+  border-radius: 12px;
+  animation: fic-in 0.15s ease both;
+}
+.fic-select-item { padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--cocoa); cursor: pointer; }
+.fic-select-item:hover { background: #f3e9dc; }
+.fic-select-item.selected { color: var(--walnut); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-info-card-column-popover, .fic-alias-pop, .fic-select-list { animation: none; }
+}
