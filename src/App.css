@@ -4045,3 +4045,291 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .feature-info-card-column-popover, .fic-alias-pop, .fic-select-list { animation: none; }
 }
+
+/* ================= Halaman Export: datar, minim kotak ================= */
+.export-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 28px 28px 8px;
+}
+.export-panel .config-section {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0 0 26px;
+  margin: 0 0 26px;
+  border-bottom: 1px solid rgba(216, 195, 165, 0.6);
+}
+.export-panel .config-section h3 {
+  margin: 0 0 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--walnut);
+}
+
+/* Slider: label kiri, nilai kanan, track di bawah */
+.export-panel .config-slider-block {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  row-gap: 8px;
+  margin-bottom: 18px;
+}
+.export-panel .config-slider-label { grid-area: 1 / 1; font-size: 13px; color: #8a837d; margin: 0; }
+.export-panel .config-slider-value {
+  grid-area: 1 / 2;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--walnut);
+  text-align: right;
+}
+.export-panel .config-slider-row { grid-area: 2 / 1 / 3 / 3; }
+.export-panel .config-slider-bound { display: none; }
+.export-panel input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--sand);
+  outline: none;
+}
+.export-panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--walnut);
+  border: 2px solid var(--ivory);
+  box-shadow: 0 1px 3px rgba(44, 36, 31, 0.3);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.export-panel input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.export-panel input[type="range"]:disabled { opacity: 0.35; }
+
+/* Teks bantu bergaris (mis. "Zoom pas boundary: 16") */
+.export-panel .config-slider-block > :not(.config-slider-label):not(.config-slider-value):not(.config-slider-row):not(.config-checkbox-row) {
+  grid-column: 1 / 3;
+  font-size: 12px;
+  color: #8a837d;
+  padding-bottom: 8px;
+  margin: 0;
+  border-bottom: 1px solid var(--sand);
+}
+
+/* Checkbox -> toggle switch */
+.export-panel .config-checkbox-row {
+  grid-column: 1 / 3;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 14px;
+  color: var(--cocoa);
+  cursor: pointer;
+}
+.export-panel .config-checkbox-row input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--sand);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.export-panel .config-checkbox-row input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(44, 36, 31, 0.3);
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.export-panel .config-checkbox-row input[type="checkbox"]:checked { background: var(--walnut); }
+.export-panel .config-checkbox-row input[type="checkbox"]:checked::after { transform: translateX(16px); }
+
+/* Identitas halaman: input bergaris bawah */
+.export-panel input[type="text"] {
+  grid-column: 1 / 3;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 1px solid var(--sand);
+  border-radius: 0;
+  background: transparent;
+  color: var(--cocoa);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  box-shadow: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.export-panel input[type="text"]:focus {
+  border-bottom-color: var(--caramel);
+  box-shadow: 0 1px 0 var(--caramel);
+}
+.export-tab-mockup {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--sand);
+  border-radius: 0;
+  padding: 0 0 10px;
+  margin-bottom: 18px;
+  color: var(--walnut);
+}
+
+/* Tombol di panel: tautan teks */
+.export-panel .config-section button[type="button"] {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 2px 0;
+  color: var(--walnut);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--sand);
+  text-underline-offset: 4px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.export-panel .config-section button[type="button"]:hover:not(:disabled) {
+  color: var(--espresso);
+  text-decoration-color: var(--caramel);
+  background: transparent;
+}
+.export-panel .logo-actions { gap: 18px; }
+.export-panel .project-path { font-size: 12px; color: #8a837d; margin: 8px 0 0; word-break: break-all; }
+
+/* Tombol Export Web GIS (bagian terakhir): pill cokelat */
+.export-panel .config-section:last-of-type { border-bottom: 0; }
+.export-panel .config-section:last-of-type button[type="button"] {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--walnut);
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  border: 1px solid var(--walnut);
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.export-panel .config-section:last-of-type button[type="button"]:hover:not(:disabled) {
+  background: #fff;
+  color: var(--walnut);
+}
+.export-panel .config-section:last-of-type button[type="button"]:disabled {
+  background: #cfc6bf;
+  border-color: #cfc6bf;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/* Tab Desktop / Mobile: pill cokelat */
+.export-preview-device-toggle { gap: 6px; }
+.export-preview-tab {
+  background: transparent;
+  color: var(--walnut);
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.export-preview-tab:hover:not(.active) { background: #f3e9dc; }
+.export-preview-tab.active {
+  background: var(--walnut);
+  border-color: var(--walnut);
+  color: #fff;
+}
+
+/* Peta: bingkai lembut */
+.export-preview-frame { border: 0; border-radius: 20px; box-shadow: 0 10px 30px rgba(44, 36, 31, 0.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .export-panel input[type="checkbox"]::after { transition: none; }
+}
+
+/* ================= Export: seimbang (garis + kotak secukupnya) ================= */
+
+/* Dua bagian utama jadi kartu ringan, bukan datar total */
+.export-panel .config-section {
+  background: #fff;
+  border: 1px solid rgba(216, 195, 165, 0.55);
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(44, 36, 31, 0.05);
+  padding: 20px 22px 8px;
+  margin: 0 0 18px;
+}
+.export-panel .config-section:last-of-type {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Garis hanya di tempat penting: teks bantu zoom & judul bagian */
+.export-panel .config-section h3 {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sand);
+  margin-bottom: 18px;
+}
+
+/* Pratinjau tab browser: kotak lembut kembali */
+.export-tab-mockup {
+  background: var(--ivory);
+  border: 1px solid var(--sand);
+  border-radius: 12px;
+  padding: 8px 14px;
+  margin-bottom: 18px;
+}
+
+/* Title Halaman tetap bergaris bawah (satu-satunya input bergaris) */
+.export-panel input[type="text"] { margin-top: 2px; }
+
+/* Tombol Pilih Logo / Folder: pill outline, bukan tautan polos */
+.export-panel .config-section button[type="button"] {
+  padding: 7px 18px;
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  background: transparent;
+  text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.export-panel .config-section button[type="button"]:hover:not(:disabled) {
+  background: var(--walnut);
+  border-color: var(--walnut);
+  color: #fff;
+}
+.export-panel .config-section:last-of-type button[type="button"] {
+  border: 1px solid var(--walnut);
+  background: var(--walnut);
+  color: #fff;
+}
+.export-panel .config-section:last-of-type button[type="button"]:hover:not(:disabled) {
+  background: #fff;
+  color: var(--walnut);
+}
+
+/* Toggle: tanpa garis antar baris, cukup jarak */
+.export-panel .config-checkbox-row { padding: 4px 0; }
+
+/* Sedikit ruang di bawah isi kartu */
+.export-panel .config-section > :last-child { margin-bottom: 14px; }
