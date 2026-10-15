@@ -148,6 +148,15 @@ function ExportPanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [labelEdit, setLabelEdit] = useState(false);
+  const [browserLight, setBrowserLightState] = useState<boolean>(
+    () => localStorage.getItem("g2w_browser_light") === "1"
+  );
+  const setBrowserLight = (fn: (v: boolean) => boolean) =>
+    setBrowserLightState((v) => {
+      const next = fn(v);
+      localStorage.setItem("g2w_browser_light", next ? "1" : "0");
+      return next;
+    });
   const [cropPath, setCropPath] = useState<string | null>(null);
 
   const [fitZoom, setFitZoom] = useState<number | null>(null);
@@ -390,13 +399,14 @@ function ExportPanel({
 
       <section className="config-section">
         <h3>Identitas Halaman</h3>
-        <div className="export-tab-mockup" aria-label="Pratinjau tab browser">
+        <div className={"browser-strip" + (browserLight ? " light" : "")} aria-label="Pratinjau tab browser">
+        <div className="export-tab-mockup">
           <span className="export-tab-mockup-icon">
             {exportConfig.exportLogoPath && exportConfig.exportLogoCrop ? (
               <LogoPreview
                 src={convertFileSrc(exportConfig.exportLogoPath)}
                 crop={exportConfig.exportLogoCrop}
-                size={20}
+                size={16}
               />
             ) : (
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -408,6 +418,30 @@ function ExportPanel({
           <span className="export-tab-mockup-title">
             {exportConfig.exportTitle.trim() || "GIS2Web Studio Export"}
           </span>
+          <span className="export-tab-mockup-close" aria-hidden="true">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+              <path d="M5 5l14 14M19 5L5 19" />
+            </svg>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="browser-theme-btn"
+          onClick={() => setBrowserLight((v) => !v)}
+          title={browserLight ? "Lihat mode gelap" : "Lihat mode terang"}
+          aria-label="Ganti mode pratinjau browser"
+        >
+          {browserLight ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+            </svg>
+          )}
+        </button>
         </div>
         <div className="config-slider-block">
           <label className="config-slider-label">Title Halaman</label>

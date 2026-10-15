@@ -4333,3 +4333,148 @@ button {
 
 /* Sedikit ruang di bawah isi kartu */
 .export-panel .config-section > :last-child { margin-bottom: 14px; }
+
+/* ================= Pratinjau tab browser (gaya Chrome gelap) ================= */
+.browser-strip {
+  display: flex;
+  align-items: flex-end;
+  height: 44px;
+  margin: 0 0 18px;
+  padding: 8px 10px 0;
+  background: #202124;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.export-tab-mockup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 230px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  margin: 0;
+  background: #35363a;
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  color: #e8eaed;
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-size: 12px;
+}
+/* lengkung kiri & kanan di dasar tab, seperti Chrome */
+.export-tab-mockup::before,
+.export-tab-mockup::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at var(--cx) 0, transparent 10px, #35363a 10.5px);
+}
+.export-tab-mockup::before { left: -10px; --cx: 0; }
+.export-tab-mockup::after  { right: -10px; --cx: 10px; }
+
+.export-tab-mockup .export-tab-mockup-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #9aa0a6;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.export-tab-mockup .export-tab-mockup-icon svg { width: 16px; height: 16px; }
+
+.export-tab-mockup .export-tab-mockup-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e8eaed;
+}
+
+.export-tab-mockup-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: #9aa0a6;
+}
+
+/* ================= Pratinjau browser: posisi pas + mode terang ================= */
+.browser-strip {
+  --strip-bg: #202124;
+  --tab-bg: #35363a;
+  --tab-fg: #e8eaed;
+  --tab-muted: #9aa0a6;
+  position: relative;
+  padding: 8px 52px 0 22px;
+  background: var(--strip-bg);
+  transition: background-color 0.25s ease;
+}
+.browser-strip.light {
+  --strip-bg: #dee1e6;
+  --tab-bg: #ffffff;
+  --tab-fg: #202124;
+  --tab-muted: #5f6368;
+}
+
+.export-tab-mockup {
+  border: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  background: var(--tab-bg);
+  color: var(--tab-fg);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.export-tab-mockup::before,
+.export-tab-mockup::after {
+  background: radial-gradient(circle at var(--cx) 0, transparent 10px, var(--tab-bg) 10.5px);
+}
+.export-tab-mockup .export-tab-mockup-title { color: var(--tab-fg); }
+.export-tab-mockup .export-tab-mockup-icon,
+.export-tab-mockup-close { color: var(--tab-muted); }
+
+/* Tombol bulat ganti mode */
+.browser-theme-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: var(--tab-fg) !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.15s ease;
+}
+.browser-strip.light .browser-theme-btn { background: rgba(0, 0, 0, 0.08) !important; }
+.browser-theme-btn:hover:not(:disabled) { background: var(--walnut) !important; color: #fff !important; }
+.browser-theme-btn:active { transform: translateY(-50%) scale(0.92); }
+
+/* Paksa mode terang pada pratinjau browser */
+.browser-strip.light { background: #dee1e6 !important; }
+.browser-strip.light .export-tab-mockup { background: #ffffff !important; color: #202124 !important; }
+.browser-strip.light .export-tab-mockup::before,
+.browser-strip.light .export-tab-mockup::after {
+  background: radial-gradient(circle at var(--cx) 0, transparent 10px, #ffffff 10.5px) !important;
+}
+.browser-strip.light .export-tab-mockup-title { color: #202124 !important; }
+.browser-strip.light .export-tab-mockup-icon,
+.browser-strip.light .export-tab-mockup-close { color: #5f6368 !important; }
+.browser-strip.light .browser-theme-btn { background: rgba(0, 0, 0, 0.08) !important; color: #202124 !important; }
