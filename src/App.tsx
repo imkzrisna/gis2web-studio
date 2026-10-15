@@ -7,7 +7,7 @@ import "./App.css";
 import MapView from "./components/MapView";
 import ProjectPanel, { type LayerInfo } from "./components/ProjectPanel";
 import ImportToolbar from "./components/ImportToolbar";
-import ConfigurationPanel, {
+import {
   type WebGisConfig,
   type ExportConfig,
   type BasemapCandidateInfo,
@@ -241,7 +241,7 @@ function App({ onReset }: { onReset?: () => void }) {
     }, 500);
     return () => window.clearTimeout(timeout);
   }, [projectPath, config, exportConfig, labelPositions]);
-  const [gdalAvailable, setGdalAvailable] = useState(false);
+  const [, setGdalAvailable] = useState(false);
 
   useEffect(() => {
     invoke("clear_raster_preview").catch(() => {});
